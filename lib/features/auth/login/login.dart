@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar.dart';
+import 'package:http/http.dart' as http;
+import '../register/register.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,13 +16,50 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  void _login() {
+  void _login() async {
     final email = _emailController.text;
     final password = _passwordController.text;
 
-    // TODO: lógica de autenticación aquí
-    print('Email: $email, Password: $password');
+    if (!email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa un correo válido')),
+      );
+      return;
+    }
+
+    final body = jsonEncode({
+      "username": email,
+      "password": password,
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/api/v1/authentication/sign-in'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        final token = data['token'];
+        final userId = data['id'];
+
+      } else {
+        print("${response.statusCode} - ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Credenciales inválidas')),
+        );
+      }
+    } catch (e) {
+      print("Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error de conexión')),
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +144,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 20),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                  );
+                },
                 child: const Text(
                   '¿No tienes una cuenta? Regístrate aquí',
                   style: TextStyle(color: Color(0xFF8A5A44)),
