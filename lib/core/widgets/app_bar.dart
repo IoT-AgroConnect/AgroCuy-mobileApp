@@ -18,7 +18,7 @@ class appBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               const SizedBox(width: 12),
               const Text(
-                'AgroConnect',
+                'AgroCuy',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,

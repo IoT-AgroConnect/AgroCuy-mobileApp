@@ -155,6 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final String selectedRole = role == 'Criador' ? 'ROLE_BREEDER' : 'ROLE_ADVISOR';
 
         final registered = await registerUser(
+          name: _nameController.text,
           username: _emailController.text,
           password: _passwordController.text,
           role: selectedRole,
@@ -174,8 +175,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               context,
               MaterialPageRoute(
                 builder: (_) => role == 'Criador'
-                    ? CriadorFormScreen(userId: userId, token: token, fullname: _nameController.text)
-                    : AsesorFormScreen(userId: userId, token: token, fullname: _nameController.text),
+                    ? CriadorFormScreen(userId: userId, token: token, fullname: _nameController.text, name: _nameController.text)
+                    : AsesorFormScreen(userId: userId, token: token, fullname: _nameController.text, name: _nameController.text),
               ),
             );
           } else {
@@ -202,6 +203,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<bool> registerUser({
+    required String name,
     required String username,
     required String password,
     required String role,

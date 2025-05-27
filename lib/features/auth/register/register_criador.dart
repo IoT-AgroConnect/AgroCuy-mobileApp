@@ -2,15 +2,20 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../login/login.dart';
+import '../welcome/welcome_screen.dart';
+
 class CriadorFormScreen extends StatefulWidget {
   final int userId;
   final String token;
   final String fullname;
+  final String name;
   const CriadorFormScreen({
     super.key,
     required this.userId,
     required this.token,
     required this.fullname,
+    required this.name,
   });
 
   @override
@@ -43,7 +48,7 @@ class _CriadorFormScreenState extends State<CriadorFormScreen> {
     }
 
     final body = {
-      "fullname": widget.fullname,
+      "fullname": widget.name,
       "location": _ubicacionController.text,
       "birthdate": _fechaNacimientoController.text,
       "description": _descripcionController.text,
@@ -67,6 +72,15 @@ class _CriadorFormScreenState extends State<CriadorFormScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registro completado con éxito')),
+        );
+        await Future.delayed(const Duration(seconds: 1));
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WelcomeScreen(),
+          ),
         );
       } else {
         debugPrint('Error: ${response.statusCode} - ${response.body}');

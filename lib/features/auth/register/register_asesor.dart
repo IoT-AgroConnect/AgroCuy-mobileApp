@@ -1,18 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:agrocuy/features/auth/login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+
+import '../welcome/welcome_screen.dart';
 
 class AsesorFormScreen extends StatefulWidget {
   final int userId;
   final String token;
   final String fullname;
+  final String name;
   const AsesorFormScreen({
     super.key,
     required this.userId,
     required this.token,
     required this.fullname,
+    required this.name,
   });
 
   @override
@@ -69,7 +74,7 @@ class _AsesorFormScreenState extends State<AsesorFormScreen> {
 
 
     final body = {
-      "fullname": widget.fullname,
+      "fullname": widget.name,
       "location": _ubicacionController.text,
       "birthdate": _fechaNacimientoController.text,
       "description": _descripcionController.text,
@@ -93,6 +98,16 @@ class _AsesorFormScreenState extends State<AsesorFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registro completado con éxito')),
         );
+        await Future.delayed(const Duration(seconds: 1));
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WelcomeScreen(),
+          ),
+        );
+
       } else {
         debugPrint('Error: ${response.statusCode} - ${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(

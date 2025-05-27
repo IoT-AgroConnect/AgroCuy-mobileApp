@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar.dart';
 import 'package:http/http.dart' as http;
+import '../../home/HomeScreen.dart';
 import '../register/register.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -46,6 +47,38 @@ class _LoginScreenState extends State<LoginScreen> {
         final token = data['token'];
         final userId = data['id'];
 
+        final userResponse = await http.get(
+          Uri.parse('http://10.0.2.2:8080/api/v1/users/$userId'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+        final userData = jsonDecode(userResponse.body);
+        final roles = userData['roles'];
+        final role = roles.first; // ROLE_BREEDER o ROLE_ADVISOR
+
+        final roleUrl = role == "ROLE_BREEDER"
+            ? 'http://10.0.2.2:8080/api/v1/breeders'
+            : 'http://10.0.2.2:8080/api/v1/advisors';
+
+        final roleResponse = await http.get(Uri.parse(roleUrl),
+            headers: {'Authorization': 'Bearer $token'});
+
+        final roleList = jsonDecode(roleResponse.body) as List;
+        final profile = roleList.firstWhere((e) => e['userId'] == userId);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(
+              token: token,
+              userId: userId,
+              fullname: profile['fullname'],
+              username: userData['username'],
+              photoUrl: profile['photo'] != null && profile['photo'].toString().isNotEmpty
+                  ? profile['photo']
+                  : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8CZsCIaMAVpL2YPvh7JH0RSePTVKH7umsgw&s',
+            ),
+          ),
+        );
       } else {
         print("${response.statusCode} - ${response.body}");
         ScaffoldMessenger.of(context).showSnackBar(

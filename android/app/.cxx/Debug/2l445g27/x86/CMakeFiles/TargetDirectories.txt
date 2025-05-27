@@ -1,0 +1,2 @@
+C:/Users/jcuad/AndroidStudioProjects/agrocuy/android/app/.cxx/Debug/2l445g27/x86/CMakeFiles/edit_cache.dir
+C:/Users/jcuad/AndroidStudioProjects/agrocuy/android/app/.cxx/Debug/2l445g27/x86/CMakeFiles/rebuild_cache.dir
