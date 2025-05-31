@@ -1,0 +1,2 @@
+C:/Users/Nadia/OneDrive/Documentos/flutter/AgroCuy-mobileApp/android/app/.cxx/Debug/634z2a5z/x86/CMakeFiles/edit_cache.dir
+C:/Users/Nadia/OneDrive/Documentos/flutter/AgroCuy-mobileApp/android/app/.cxx/Debug/634z2a5z/x86/CMakeFiles/rebuild_cache.dir
