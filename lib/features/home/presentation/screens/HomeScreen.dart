@@ -18,7 +18,7 @@ class HomeScreen extends StatelessWidget {
     required this.username,
     required this.fullname,
     required this.photoUrl,
-    required this.role,
+    required this.role, required breederId,
   });
 
   @override
@@ -36,6 +36,8 @@ class HomeScreen extends StatelessWidget {
         fullname: fullname,
         username: username.split('@').first,
         photoUrl: photoUrl,
+        advisorId: userId, // Agregado
+        token: token,      // Agregado
       ),
       body: ListView(
         padding: const EdgeInsets.all(12),

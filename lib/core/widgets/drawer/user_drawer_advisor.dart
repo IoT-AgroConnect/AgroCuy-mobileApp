@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
+import 'package:agrocuy/features/publications/presentation/publication_list_advisor_screen.dart';
 
 class UserDrawerAdvisor extends StatelessWidget {
   final String fullname;
   final String username;
   final String photoUrl;
+  final int advisorId;
+  final String token;
 
   const UserDrawerAdvisor({
     super.key,
     required this.fullname,
     required this.username,
     required this.photoUrl,
+    required this.advisorId,
+    required this.token,
   });
 
   @override
@@ -30,10 +35,24 @@ class UserDrawerAdvisor extends StatelessWidget {
           Text(fullname, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
           Text('@$username', style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 30),
-          _buildItem("Asesorías", () {}),
           _buildItem("Clientes", () {}),
           _buildItem("Notificaciones", () {}),
-          _buildItem("Configuración", () {}),
+          _buildItem("Mis Publicaciones", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PublicationListAdvisorScreen(
+                  advisorId: advisorId,
+                  token: token,
+                  fullname: fullname,
+                  username: username,
+                  photoUrl: photoUrl,
+                ),
+              ),
+            );
+          }),
+          _buildItem("Horarios", () {}),
+          _buildItem("Calendario", () {}),
           const Spacer(),
           _logoutButton(context),
         ],

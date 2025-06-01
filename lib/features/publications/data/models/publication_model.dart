@@ -18,21 +18,32 @@ class PublicationModel {
   factory PublicationModel.fromJson(Map<String, dynamic> json) {
     return PublicationModel(
       id: json['id'],
-      title: json['title'],
-      description: json['description'],
-      image: json['image'],
-      date: json['date'],
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      image: json['image'] ?? '',
+      date: json['date'] ?? '',
       advisorId: json['advisorId'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      "title": title,
-      "description": description,
-      "image": image,
-      "date": date,
-      "advisorId": advisorId,
+      'id': id,
+      'title': title,
+      'description': description,
+      'image': image,
+      'date': date,
+      'advisorId': advisorId,
+    };
+  }
+
+  Map<String, dynamic> toCreateJson() {
+    return {
+      'title': title,
+      'description': description,
+      'image': image,
+      'date': date,
+      'advisorId': advisorId,
     };
   }
 }
