@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:agrocuy/core/widgets/app_bar.dart';
-import 'package:agrocuy/features/auth/register/register_asesor.dart';
-import 'package:agrocuy/features/auth/register/register_criador.dart';
-import 'package:agrocuy/features/auth/terms_conditions/terms_and_conditions.dart';
+import 'package:agrocuy/features/auth/presentation/register/register_asesor_screen.dart';
+import 'package:agrocuy/features/auth/presentation/register/register_criador_screen.dart';
+import 'package:agrocuy/features/auth/presentation/terms_conditions/terms_and_conditions.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../login/login.dart';
+// Import login screen
+import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 

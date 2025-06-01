@@ -1,9 +1,7 @@
-import 'package:agrocuy/core/widgets/user_drawer.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-import '../../core/widgets/app_bar_menu.dart';
+import 'package:agrocuy/core/widgets/app_bar_menu.dart';
+import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
+import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
 
 class HomeScreen extends StatelessWidget {
   final String token;
@@ -11,6 +9,7 @@ class HomeScreen extends StatelessWidget {
   final String fullname;
   final String username;
   final String photoUrl;
+  final String role; // NUEVO
 
   const HomeScreen({
     super.key,
@@ -19,18 +18,24 @@ class HomeScreen extends StatelessWidget {
     required this.username,
     required this.fullname,
     required this.photoUrl,
+    required this.role,
   });
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: const Color(0xFFFFE3B3),
       appBar: const appBarMenu(title: 'AgroCuy'),
-      drawer: userDrawer(
-        fullname: fullname  ,
+      drawer: role == 'ROLE_BREEDER'
+          ? UserDrawerBreeder(
+        fullname: fullname,
         username: username.split('@').first,
-        photoUrl: 'https://example.com/mi_foto.jpg',
+        photoUrl: photoUrl,
+      )
+          : UserDrawerAdvisor(
+        fullname: fullname,
+        username: username.split('@').first,
+        photoUrl: photoUrl,
       ),
       body: ListView(
         padding: const EdgeInsets.all(12),
@@ -52,7 +57,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          // Simulación de los asesores
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -84,6 +88,7 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildCategoryButton(String label, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,

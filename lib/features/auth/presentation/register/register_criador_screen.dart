@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../login/login.dart';
-import '../welcome/welcome_screen.dart';
+import 'package:agrocuy/features/auth/presentation/welcome/welcome_screen.dart';
 
 class CriadorFormScreen extends StatefulWidget {
   final int userId;
   final String token;
   final String fullname;
   final String name;
+
   const CriadorFormScreen({
     super.key,
     required this.userId,
@@ -23,27 +23,21 @@ class CriadorFormScreen extends StatefulWidget {
 }
 
 class _CriadorFormScreenState extends State<CriadorFormScreen> {
-  final TextEditingController _ubicacionController = TextEditingController();
-  final TextEditingController _fechaNacimientoController = TextEditingController();
-  final TextEditingController _descripcionController = TextEditingController();
+  final _ubicacionController = TextEditingController();
+  final _fechaNacimientoController = TextEditingController();
+  final _descripcionController = TextEditingController();
 
   Future<void> _registrarCriador() async {
     if (_ubicacionController.text.isEmpty ||
         _fechaNacimientoController.text.isEmpty ||
         _descripcionController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa todos los campos')),
-      );
+      showError('Completa todos los campos');
       return;
     }
 
-    final fecha = _fechaNacimientoController.text.trim();
     final fechaRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-
-    if (!fechaRegex.hasMatch(fecha)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La fecha debe tener el formato aaaa-mm-dd')),
-      );
+    if (!fechaRegex.hasMatch(_fechaNacimientoController.text)) {
+      showError('La fecha debe tener el formato aaaa-mm-dd');
       return;
     }
 
@@ -56,10 +50,6 @@ class _CriadorFormScreenState extends State<CriadorFormScreen> {
     };
 
     try {
-      final jsonBody = jsonEncode(body);
-      print("📤 JSON enviado a /api/v1/advisors:");
-      print(jsonBody);
-      print(widget.token);
       final response = await http.post(
         Uri.parse('http://10.0.2.2:8080/api/v1/breeders'),
         headers: {
@@ -70,30 +60,17 @@ class _CriadorFormScreenState extends State<CriadorFormScreen> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registro completado con éxito')),
-        );
-        await Future.delayed(const Duration(seconds: 1));
-
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => WelcomeScreen(),
-          ),
-        );
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()));
       } else {
-        debugPrint('Error: ${response.statusCode} - ${response.body}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.statusCode}')),
-        );
+        showError('Error: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Excepción: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ocurrió un error inesperado')),
-      );
+      showError('Ocurrió un error inesperado');
     }
+  }
+
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -104,13 +81,7 @@ class _CriadorFormScreenState extends State<CriadorFormScreen> {
         backgroundColor: const Color(0xFFB16546),
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'AgroConnect',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFFDF6E4),
-          ),
-        ),
+        title: const Text('AgroConnect', style: TextStyle(color: Color(0xFFFDF6E4))),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -124,35 +95,21 @@ class _CriadorFormScreenState extends State<CriadorFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Formulario - Criador',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF8A5A44),
-                  ),
-                ),
+                const Text('Formulario - Criador', textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF8A5A44))),
                 const SizedBox(height: 20),
-                _buildInput(_ubicacionController, 'Ubicación (departamento)'),
+                _buildInput(_ubicacionController, 'Ubicación'),
                 const SizedBox(height: 16),
                 _buildInput(_fechaNacimientoController, 'Fecha de nacimiento'),
                 const SizedBox(height: 16),
-                _buildInput(_descripcionController, 'Descripción (cuéntanos sobre ti)', maxLines: 5),
+                _buildInput(_descripcionController, 'Descripción', maxLines: 5),
                 const SizedBox(height: 28),
                 ElevatedButton(
                   onPressed: _registrarCriador,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFB16546),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
-                  child: const Text(
-                    'Registrar',
-                    style: TextStyle(fontSize: 18, color: Color(0xFFFDF6E4)),
-                  ),
+                  child: const Text('Registrar', style: TextStyle(fontSize: 18, color: Color(0xFFFDF6E4))),
                 ),
               ],
             ),

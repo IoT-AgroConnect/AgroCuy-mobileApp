@@ -1,14 +1,13 @@
-// lib/core/widgets/usuario_drawer.dart
 import 'package:flutter/material.dart';
 
-import '../../features/auth/login/login.dart';
+import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 
-class userDrawer extends StatelessWidget {
+class UserDrawerBreeder extends StatelessWidget {
   final String fullname;
   final String username;
   final String photoUrl;
 
-  const userDrawer({
+  const UserDrawerBreeder({
     super.key,
     required this.fullname,
     required this.username,
