@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "465584378697",
+    "project_id": "pocket-patners",
+    "storage_bucket": "pocket-patners.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:465584378697:android:c883d287ee2aff23f94098",
+        "android_client_info": {
+          "package_name": "com.example.agrocuy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2Xv3ZtzvoVwYRyJBeiULBLeQBgXpZhsU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

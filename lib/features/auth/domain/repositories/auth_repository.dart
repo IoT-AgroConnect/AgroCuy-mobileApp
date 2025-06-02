@@ -1,7 +1,11 @@
 import 'package:agrocuy/features/auth/data/datasources/auth_remote_data_source.dart';
 
+// Shared imports
+import '../../../../infrastructure/services/session_service.dart';
+
 class AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
+  final SessionService _session = SessionService();
 
   AuthRepository(this.remoteDataSource);
 
@@ -9,11 +13,13 @@ class AuthRepository {
     return await remoteDataSource.login(email, password);
   }
 
-  Future<Map<String, dynamic>> getUserData(String token, int userId) async {
+  Future<Map<String, dynamic>> getUserData(int userId) async {
+    final token = _session.getToken();
     return await remoteDataSource.getUserData(token, userId);
   }
 
-  Future<Map<String, dynamic>> getProfileByRole(String token, String role) async {
+  Future<Map<String, dynamic>> getProfileByRole(String role) async {
+    final token = _session.getToken();
     return await remoteDataSource.getProfileByRole(token, role);
   }
 
@@ -37,5 +43,10 @@ class AuthRepository {
       username: username,
       password: password,
     );
+  }
+
+  Future<Map<String, dynamic>> getAdvisorById(int advisorId) {
+    final token = _session.getToken();
+    return remoteDataSource.getAdvisorById(token, advisorId);
   }
 }

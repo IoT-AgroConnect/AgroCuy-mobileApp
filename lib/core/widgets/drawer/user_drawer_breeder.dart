@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserDrawerBreeder extends StatelessWidget {
   final String fullname;
@@ -57,7 +58,10 @@ class UserDrawerBreeder extends StatelessWidget {
                 backgroundColor: Colors.brown,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('token');
+
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
