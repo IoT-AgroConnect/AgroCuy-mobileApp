@@ -1,10 +1,15 @@
+// login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:agrocuy/features/home/presentation/screens/HomeScreen.dart';
+import 'package:agrocuy/features/publications/presentation/publication_list_advisor_screen.dart';
 import 'package:agrocuy/features/auth/presentation/register/register.dart';
-import 'package:agrocuy/infrastructure/services/base_service.dart';
 import 'package:agrocuy/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:agrocuy/features/auth/domain/repositories/auth_repository.dart';
 import '../../../../../../core/widgets/app_bar.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../infrastructure/services/session_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -36,28 +41,52 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = loginData['token'];
       final userId = loginData['id'];
 
-      final userData = await _authRepository.getUserData(token, userId);
+      final userData = await _authRepository.getUserData(userId);
       final role = (userData['roles'] as List).first;
 
-      final profileData = await _authRepository.getProfileByRole(token, role);
+      // Guardar datos de sesión en SharedPreferences
+      await SessionService().setToken(token);
+      await SessionService().setUserId(userId);
+      await SessionService().setRole(role);
+      // Guardar datos de sesión en SharedPreferences
+
+      final profileData = await _authRepository.getProfileByRole(role);
       final profileList = profileData['list'] as List;
       final profile = profileList.firstWhere((e) => e['userId'] == userId);
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            token: token,
-            userId: userId,
-            fullname: profile['fullname'],
-            username: userData['username'],
-            photoUrl: profile['photo'] != null && profile['photo'].toString().isNotEmpty
-                ? profile['photo']
-                : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8CZsCIaMAVpL2YPvh7JH0RSePTVKH7umsgw&s',
-            role: role, // nuevo parámetro obligatorio que define el rol del usuario
+      final String photoUrl = profile['photo']?.isNotEmpty == true
+          ? profile['photo']
+          : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8CZsCIaMAVpL2YPvh7JH0RSePTVKH7umsgw&s';
+
+      if (role == 'ROLE_ADVISOR') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PublicationListAdvisorScreen(
+              advisorId: profile['id'],
+              fullname: profile['fullname'],
+              username: userData['username'],
+              photoUrl: photoUrl,
+            ),
           ),
-        ),
-      );
+        );
+      } else if (role == 'ROLE_BREEDER') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(
+              userId: userId,
+              breederId: profile['id'],
+              fullname: profile['fullname'],
+              username: userData['username'],
+              photoUrl: photoUrl,
+              role: role,
+            ),
+          ),
+        );
+      } else {
+        throw Exception("Rol no soportado");
+      }
     } catch (e) {
       print("Login error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
