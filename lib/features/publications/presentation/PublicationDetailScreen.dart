@@ -4,14 +4,18 @@ import 'package:agrocuy/features/publications/data/models/publication_model.dart
 import 'package:agrocuy/features/publications/data/datasources/publication_remote_data_source.dart';
 import 'package:agrocuy/features/publications/domain/repositories/publication_repository.dart';
 
+//Importing AuthRepository
+import 'package:agrocuy/features/auth/domain/repositories/auth_repository.dart';
+import 'package:agrocuy/features/auth/data/datasources/auth_remote_data_source.dart';
+
+import 'PublicationFormScreen.dart';
+
 class PublicationDetailScreen extends StatefulWidget {
   final int id;
-  final String token;
 
   const PublicationDetailScreen({
     super.key,
-    required this.id,
-    required this.token,
+    required this.id
   });
 
   @override
@@ -20,7 +24,10 @@ class PublicationDetailScreen extends StatefulWidget {
 
 class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
   final PublicationRepository _repository = PublicationRepository(PublicationRemoteDataSource());
+  final AuthRepository _authRepository = AuthRepository(AuthRemoteDataSource());
+
   PublicationModel? _publication;
+  String? _advisorName;
   bool _isLoading = true;
 
   @override
@@ -31,13 +38,17 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
 
   Future<void> _loadDetail() async {
     try {
-      final pub = await _repository.getById(widget.id, widget.token);
+      final pub = await _repository.getById(widget.id);
+      final advisorData = await _authRepository.getAdvisorById(pub.advisorId);
+
       setState(() {
         _publication = pub;
+        _advisorName = advisorData['fullname'];
         _isLoading = false;
       });
     } catch (e) {
       print("Error al cargar detalle: $e");
+      setState(() => _isLoading = false);
     }
   }
 
@@ -112,7 +123,7 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
               children: [
                 const Icon(Icons.person, color: Colors.orange),
                 const SizedBox(width: 8),
-                const Text("ElCarlitosTV"), // hardcoded, ideally should come from backend
+                Text(_advisorName ?? 'Desconocido'),
                 const Spacer(),
                 Text("Publicado el $dateFormatted"),
               ],
@@ -122,11 +133,45 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PublicationFormScreen(
+                          advisorId: pub.advisorId,
+                          publication: pub, // se pasa para modo edición
+                        ),
+                      ),
+                    );
+                    if (result == true) _loadDetail(); // recargar luego de editar
+                  },
                   icon: const Icon(Icons.edit, color: Colors.black54),
                 ),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Eliminar'),
+                        content: const Text('¿Estás seguro de que deseas eliminar esta publicación?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar')),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      try {
+                        await _repository.delete(pub.id);
+                        if (mounted) Navigator.pop(context, true); // Regresa al listado
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Error al eliminar publicación')),
+                        );
+                      }
+                    }
+                  },
                   icon: const Icon(Icons.delete, color: Colors.red),
                 ),
               ],
@@ -137,3 +182,4 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
     );
   }
 }
+

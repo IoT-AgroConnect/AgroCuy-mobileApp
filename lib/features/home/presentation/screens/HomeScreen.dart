@@ -4,7 +4,6 @@ import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
 
 class HomeScreen extends StatelessWidget {
-  final String token;
   final int userId;
   final String fullname;
   final String username;
@@ -13,7 +12,6 @@ class HomeScreen extends StatelessWidget {
 
   const HomeScreen({
     super.key,
-    required this.token,
     required this.userId,
     required this.username,
     required this.fullname,
@@ -36,8 +34,7 @@ class HomeScreen extends StatelessWidget {
         fullname: fullname,
         username: username.split('@').first,
         photoUrl: photoUrl,
-        advisorId: userId, // Agregado
-        token: token,      // Agregado
+        advisorId: userId
       ),
       body: ListView(
         padding: const EdgeInsets.all(12),

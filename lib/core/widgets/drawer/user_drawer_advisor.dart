@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 import 'package:agrocuy/features/publications/presentation/publication_list_advisor_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserDrawerAdvisor extends StatelessWidget {
   final String fullname;
   final String username;
   final String photoUrl;
   final int advisorId;
-  final String token;
 
   const UserDrawerAdvisor({
     super.key,
@@ -15,7 +15,6 @@ class UserDrawerAdvisor extends StatelessWidget {
     required this.username,
     required this.photoUrl,
     required this.advisorId,
-    required this.token,
   });
 
   @override
@@ -43,7 +42,6 @@ class UserDrawerAdvisor extends StatelessWidget {
               MaterialPageRoute(
                 builder: (_) => PublicationListAdvisorScreen(
                   advisorId: advisorId,
-                  token: token,
                   fullname: fullname,
                   username: username,
                   photoUrl: photoUrl,
@@ -75,7 +73,10 @@ class UserDrawerAdvisor extends StatelessWidget {
           backgroundColor: Colors.brown,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        onPressed: () {
+        onPressed: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('token');
+
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -86,4 +87,5 @@ class UserDrawerAdvisor extends StatelessWidget {
       ),
     );
   }
+
 }

@@ -11,7 +11,6 @@ import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
 
 class PublicationListAdvisorScreen extends StatefulWidget {
   final int advisorId;
-  final String token;
   final String fullname;
   final String username;
   final String photoUrl;
@@ -19,7 +18,6 @@ class PublicationListAdvisorScreen extends StatefulWidget {
   const PublicationListAdvisorScreen({
     super.key,
     required this.advisorId,
-    required this.token,
     required this.fullname,
     required this.username,
     required this.photoUrl,
@@ -46,7 +44,7 @@ class _PublicationListAdvisorScreenState
 
   Future<void> _loadPublications() async {
     try {
-      final all = await _repository.getAll(widget.token);
+      final all = await _repository.getAll();
       setState(() {
         _publications =
             all.where((p) => p.advisorId == widget.advisorId).toList();
@@ -60,7 +58,7 @@ class _PublicationListAdvisorScreenState
 
   Future<void> _deletePublication(int id) async {
     try {
-      await _repository.delete(id, widget.token);
+      await _repository.delete(id);
       await _loadPublications();
     } catch (e) {
       print('Error al eliminar: $e');
@@ -77,7 +75,6 @@ class _PublicationListAdvisorScreenState
       backgroundColor: const Color(0xFFFFE3B3),
       drawer: UserDrawerAdvisor(
         advisorId: widget.advisorId,
-        token: widget.token,
         fullname: widget.fullname,
         username: widget.username,
         photoUrl: widget.photoUrl,
@@ -158,8 +155,7 @@ class _PublicationListAdvisorScreenState
                         context,
                         MaterialPageRoute(
                           builder: (_) => PublicationDetailScreen(
-                            id: pub.id,
-                            token: widget.token,
+                            id: pub.id
                           ),
                         ),
                       ),
@@ -174,8 +170,7 @@ class _PublicationListAdvisorScreenState
                   context,
                   MaterialPageRoute(
                     builder: (_) => PublicationFormScreen(
-                      advisorId: widget.advisorId,
-                      token: widget.token,
+                      advisorId: widget.advisorId
                     ),
                   ),
                 );

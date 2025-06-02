@@ -8,13 +8,11 @@ import 'package:agrocuy/infrastructure/services/firebase_api.dart';
 
 class PublicationFormScreen extends StatefulWidget {
   final int advisorId;
-  final String token;
   final PublicationModel? publication;
 
   const PublicationFormScreen({
     super.key,
     required this.advisorId,
-    required this.token,
     this.publication,
   });
 
@@ -72,9 +70,9 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
       );
 
       if (widget.publication == null) {
-        await _repository.create(newPublication, widget.token);
+        await _repository.create(newPublication);
       } else {
-        await _repository.update(widget.publication!.id, newPublication, widget.token);
+        await _repository.update(widget.publication!.id, newPublication);
       }
 
       if (mounted) Navigator.pop(context, true);

@@ -7,6 +7,10 @@ import 'package:agrocuy/features/auth/data/datasources/auth_remote_data_source.d
 import 'package:agrocuy/features/auth/domain/repositories/auth_repository.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../infrastructure/services/session_service.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -37,10 +41,16 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = loginData['token'];
       final userId = loginData['id'];
 
-      final userData = await _authRepository.getUserData(token, userId);
+      final userData = await _authRepository.getUserData(userId);
       final role = (userData['roles'] as List).first;
 
-      final profileData = await _authRepository.getProfileByRole(token, role);
+      // Guardar datos de sesión en SharedPreferences
+      await SessionService().setToken(token);
+      await SessionService().setUserId(userId);
+      await SessionService().setRole(role);
+      // Guardar datos de sesión en SharedPreferences
+
+      final profileData = await _authRepository.getProfileByRole(role);
       final profileList = profileData['list'] as List;
       final profile = profileList.firstWhere((e) => e['userId'] == userId);
 
@@ -53,7 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => PublicationListAdvisorScreen(
-              token: token,
               advisorId: profile['id'],
               fullname: profile['fullname'],
               username: userData['username'],
@@ -66,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => HomeScreen(
-              token: token,
               userId: userId,
               breederId: profile['id'],
               fullname: profile['fullname'],
