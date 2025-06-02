@@ -16,7 +16,8 @@ class HomeScreen extends StatelessWidget {
     required this.username,
     required this.fullname,
     required this.photoUrl,
-    required this.role, required breederId,
+    required this.role, 
+    required breederId,
   });
 
   @override
