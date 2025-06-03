@@ -4,19 +4,13 @@ import 'package:intl/intl.dart';
 
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
+  final VoidCallback onDelete;
 
-  const NotificationCard({Key? key, required this.notification}) : super(key: key);
-
-  IconData _getIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'cita':
-        return Icons.calendar_today;
-      case 'recordatorio':
-        return Icons.notifications;
-      default:
-        return Icons.info;
-    }
-  }
+  const NotificationCard({
+    Key? key,
+    required this.notification,
+    required this.onDelete,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,14 +21,20 @@ class NotificationCard extends StatelessWidget {
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        leading: Icon(_getIcon(notification.type), color: Colors.deepPurple),
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            'lib/assets/images/notis_cuy.png',
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+          ),
+        ),
         title: Text(notification.text),
         subtitle: Text(dateFormatted),
         trailing: IconButton(
           icon: const Icon(Icons.delete, color: Colors.redAccent),
-          onPressed: () {
-            // Puedes implementar la lógica para borrar la notificación aquí
-          },
+          onPressed: onDelete,
         ),
       ),
     );
