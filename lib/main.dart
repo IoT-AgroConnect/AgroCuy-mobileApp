@@ -1,3 +1,4 @@
+import 'package:agrocuy/features/notifications/presentation/notificationFullScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
+      home: const NotificationScreen(),
     );
   }
 }
