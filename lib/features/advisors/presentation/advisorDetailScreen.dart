@@ -63,7 +63,6 @@ class AdvisorDetailScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () {
-                    // Aquí podrías ir a una pantalla de agendamiento
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Funcionalidad de reserva pendiente")),
                     );
