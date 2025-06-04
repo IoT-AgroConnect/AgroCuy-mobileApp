@@ -1,19 +1,18 @@
-class AvailableDateModel {
+import 'package:flutter/material.dart';
+
+class ScheduleModel {
   final int id;
-  final int advisorId;
-  final String dateTime;
+  final DateTime date;
+  final String startTime;
+  final String endTime;
+  final String status;
 
-  AvailableDateModel({
+  ScheduleModel({
     required this.id,
-    required this.advisorId,
-    required this.dateTime,
+    required this.date,
+    required this.startTime,
+    required this.endTime,
+    required this.status,
   });
-
-  factory AvailableDateModel.fromJson(Map<String, dynamic> json) {
-    return AvailableDateModel(
-      id: json['id'],
-      advisorId: json['advisorId'],
-      dateTime: json['dateTime'],
-    );
-  }
 }
+
