@@ -3,7 +3,7 @@ import '../data/models/advisor_model.dart';
 import '../data/models/review_model.dart'; // Asegúrate de tener esta clase
 import '../data/datasources/advisor_remote_data_source.dart';
 import '../domain/repositories/advisor_repository.dart';
-import 'ScheduleBookingScreen.dart';
+import 'availableDateBookingScreen.dart';
 
 class AdvisorDetailScreen extends StatelessWidget {
   const AdvisorDetailScreen({super.key});
@@ -64,7 +64,7 @@ class AdvisorDetailScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () async {
-                    final scheduleRepository = ScheduleRepositoryImpl(); // Asegúrate de importar esto
+                    /*final scheduleRepository = ScheduleRepositoryImpl(); // Asegúrate de importar esto
                     final advisorSchedules = await scheduleRepository.getSchedulesByAdvisor(advisor.id);
 
                     if (context.mounted) {
@@ -75,6 +75,12 @@ class AdvisorDetailScreen extends StatelessWidget {
                         ),
                       );
                     }
+                  },*/
+                    Navigator.pushNamed(
+                      context,
+                      '/available-dates',
+                      arguments: advisor.id,
+                    );
                   },
                   child: const Text("Reservar Cita"),
                 ),

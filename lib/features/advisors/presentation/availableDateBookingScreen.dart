@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../data/models/available_date_model.dart';
 
-class ScheduleBookingScreen extends StatelessWidget {
-  final List<ScheduleModel> schedules;
+class AvailableDatesScreen extends StatelessWidget {
+  final List<AvailableDateModel> AvailableDates;
 
-  const ScheduleBookingScreen({super.key, required this.schedules});
+  const AvailableDatesScreen({super.key, required this.AvailableDates});
 
-  void _showConfirmDialog(BuildContext context, ScheduleModel schedule) {
+  void _showConfirmDialog(BuildContext context, AvailableDateModel AvailableDate) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Confirmar reserva'),
         content: Text(
-            '¿Deseas reservar esta cita?\n\n${DateFormat('yyyy-MM-dd').format(schedule.date)}\n${schedule.startTime} - ${schedule.endTime}'),
+            '¿Deseas reservar esta cita?\n\n${DateFormat('yyyy-MM-dd').format(AvailableDate.date)}\n${AvailableDate.startTime} - ${AvailableDate.endTime}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -64,8 +64,8 @@ class ScheduleBookingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final availableSchedules =
-    schedules.where((s) => s.status == 'Disponible').toList();
+    final availableAvailableDates =
+    AvailableDates.where((s) => s.status == 'Disponible').toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -73,7 +73,7 @@ class ScheduleBookingScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: availableSchedules.isEmpty
+        child: availableAvailableDates.isEmpty
             ? Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -104,27 +104,27 @@ class ScheduleBookingScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
-                itemCount: availableSchedules.length,
+                itemCount: availableAvailableDates.length,
                 itemBuilder: (context, index) {
-                  final schedule = availableSchedules[index];
+                  final AvailableDate = availableAvailableDates[index];
                   return Card(
                     elevation: 4,
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
                       leading: Image.asset(
-                        'assets/images/cuy_schedule.png',
+                        'assets/images/cuy_AvailableDate.png',
                         height: 50,
                         width: 50,
                       ),
                       title: Text(
-                          'Fecha: ${DateFormat('yyyy-MM-dd').format(schedule.date)}'),
+                          'Fecha: ${DateFormat('yyyy-MM-dd').format(AvailableDate.date)}'),
                       subtitle: Text(
-                        'Hora Inicio: ${schedule.startTime}\nHora Fin: ${schedule.endTime}\nEstado: ${schedule.status}',
+                        'Hora Inicio: ${AvailableDate.startTime}\nHora Fin: ${AvailableDate.endTime}\nEstado: ${AvailableDate.status}',
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.event_available),
                         onPressed: () =>
-                            _showConfirmDialog(context, schedule),
+                            _showConfirmDialog(context, AvailableDate),
                       ),
                     ),
                   );

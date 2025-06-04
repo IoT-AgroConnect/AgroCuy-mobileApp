@@ -1,4 +1,4 @@
-class ScheduleModel {
+class AvailableDateModel {
   final int id;
   final DateTime date;
   final String startTime;
@@ -6,7 +6,7 @@ class ScheduleModel {
   final String status;
   final int advisorId;
 
-  ScheduleModel({
+  AvailableDateModel({
     required this.id,
     required this.date,
     required this.startTime,
@@ -15,8 +15,8 @@ class ScheduleModel {
     required this.advisorId,
   });
 
-  factory ScheduleModel.fromJson(Map<String, dynamic> json) {
-    return ScheduleModel(
+  factory AvailableDateModel.fromJson(Map<String, dynamic> json) {
+    return AvailableDateModel(
       id: json['id'],
       date: DateTime.parse(json['date']),
       startTime: json['startTime'],
