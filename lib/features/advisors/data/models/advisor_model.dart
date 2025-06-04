@@ -1,42 +1,47 @@
+import 'package:agrocuy/features/advisors/data/models/review_model.dart';
+
 class AdvisorModel {
   final int id;
   final String? fullname;
-  final String? location;
+  final String location;
   final DateTime? birthdate;
   final String description;
-  final String? occupation;
-  final int? experience;
+  final String occupation;
+  final int experience;
   final String? photo;
   final double? rating;
+  final List<ReviewModel>? reviews;
   final String userId;
 
   AdvisorModel({
     required this.id,
     this.fullname,
-    this.location,
+    required this.location,
     this.birthdate,
     required this.description,
-    this.occupation,
-    this.experience,
+    required this.occupation,
+    required this.experience,
     this.photo,
     this.rating,
-    this.userId = '',
+    this.reviews,
+    required this.userId,
   });
 
   factory AdvisorModel.fromJson(Map<String, dynamic> json) {
     return AdvisorModel(
-      id: json['id'] as int,
-      fullname: json['fullname'] as String?,
-      location: json['location'] as String?,
-      birthdate: json['birthdate'] != null
-          ? DateTime.tryParse(json['birthdate'])
-          : null,
-      description: json['description'] as String,
-      occupation: json['occupation'] as String?,
-      experience: json['experience'] as int?,
-      photo: json['photo'] as String?,
-      rating: (json['rating'] as num?)?.toDouble(),
-      userId: json['userId'] as String? ?? '',
+      id: json['id'],
+      fullname: json['fullname'],
+      location: json['location'],
+      birthdate: json['birthdate'] != null ? DateTime.parse(json['birthdate']) : null,
+      description: json['description'],
+      occupation: json['occupation'],
+      experience: json['experience'],
+      photo: json['photo'],
+      rating: (json['rating'] ?? 0).toDouble(),
+      reviews: json['reviews'] != null
+          ? (json['reviews'] as List).map((e) => ReviewModel.fromJson(e)).toList()
+          : [],
+      userId: json['userId'] ?? '',
     );
   }
 
@@ -51,6 +56,7 @@ class AdvisorModel {
       'experience': experience,
       'photo': photo,
       'rating': rating,
+      'reviews': reviews?.map((e) => e.toJson()).toList(),
       'userId': userId,
     };
   }

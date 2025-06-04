@@ -21,8 +21,7 @@ class AdvisorCard extends StatelessWidget {
         onTap: () {
           Navigator.pushNamed(
             context,
-            '/advisor-detail',
-            arguments: advisor, // Pasamos el advisor completo
+            '/advisor-detail', arguments: advisor.id,
           );
         },
       ),

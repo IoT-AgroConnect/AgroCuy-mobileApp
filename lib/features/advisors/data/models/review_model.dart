@@ -22,5 +22,14 @@ class ReviewModel {
       advisorId: json['advisorId'],
     );
   }
-}
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'content': content,
+      'rating': rating,
+      'userId': userId,
+      'advisorId': advisorId,
+    };
+  }
+}

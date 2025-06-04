@@ -1,4 +1,3 @@
-import 'package:agrocuy/features/advisors/domain/repositories/advisor_fake_repository.dart';
 import 'package:flutter/material.dart';
 import '../data/datasources/advisor_remote_data_source.dart';
 import '../data/models/advisor_model.dart';
@@ -14,40 +13,85 @@ class AdvisorListScreen extends StatefulWidget {
 
 class _AdvisorListScreenState extends State<AdvisorListScreen> {
   late AdvisorRepository _repository;
-  //late AdvisorFakeRepository _repository;
-  late Future<List<AdvisorModel>> _advisors;
+  late Future<List<AdvisorModel>> _advisorsFuture;
+  List<AdvisorModel> _allAdvisors = [];
+  List<AdvisorModel> _filteredAdvisors = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _repository = AdvisorRepository(AdvisorRemoteDataSource());
-    //_repository = AdvisorFakeRepository();
-    _advisors = _repository.getAll();
+    _advisorsFuture = _loadAdvisors();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<List<AdvisorModel>> _loadAdvisors() async {
+    final advisors = await _repository.getAll();
+    setState(() {
+      _allAdvisors = advisors;
+      _filteredAdvisors = advisors;
+    });
+    return advisors;
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredAdvisors = _allAdvisors.where((advisor) {
+        return advisor.fullname?.toLowerCase().contains(query) ?? false;
+      }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Asesores')),
-      body: FutureBuilder<List<AdvisorModel>>(
-        future: _advisors,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No hay asesores disponibles'));
-          }
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                labelText: 'Buscar asesor',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<List<AdvisorModel>>(
+              future: _advisorsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-          return ListView.builder(
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              final advisor = snapshot.data![index];
-              return AdvisorCard(advisor: advisor);
-            },
-          );
-        },
+                if (_filteredAdvisors.isEmpty) {
+                  return const Center(child: Text('No se encontraron asesores'));
+                }
+
+                return ListView.builder(
+                  itemCount: _filteredAdvisors.length,
+                  itemBuilder: (context, index) {
+                    final advisor = _filteredAdvisors[index];
+                    return AdvisorCard(advisor: advisor);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

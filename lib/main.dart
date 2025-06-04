@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
+import 'features/advisors/presentation/advisorDetailScreen.dart';
 import 'firebase_options.dart';
-// Shared preferences import
 import 'infrastructure/services/session_service.dart';
 
 void main() async {
@@ -27,6 +27,9 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       home: const LoginScreen(),
+      routes: {
+        '/advisor-detail': (context) => const AdvisorDetailScreen(),
+      },
     );
   }
 }
