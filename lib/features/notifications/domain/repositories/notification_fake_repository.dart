@@ -10,6 +10,7 @@ class NotificationFakeRepository {
         text: 'Tu asesor Marcus Smith te ha enviado una notificación.',
         date: DateTime.now(),
         userId: 1,
+        linkMeet: 'https://meet.google.com/abc-defg-hij',
       ),
       NotificationModel(
         id: 2,
@@ -17,6 +18,7 @@ class NotificationFakeRepository {
         text: 'La cita con Carla Rodríguez ha sido reprogramada.',
         date: DateTime.now().subtract(const Duration(hours: 2)),
         userId: 1,
+        linkMeet: 'https://meet.google.com/xyz-1234-567',
       ),
     ];
   }

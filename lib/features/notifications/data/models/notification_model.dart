@@ -4,6 +4,7 @@ class NotificationModel {
   final String text;
   final DateTime date;
   final int userId;
+  final String? linkMeet;
 
   NotificationModel({
     required this.id,
@@ -11,6 +12,7 @@ class NotificationModel {
     required this.text,
     required this.date,
     required this.userId,
+    required this.linkMeet,
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class NotificationModel {
       text: json['text'],
       date: DateTime.parse(json['date']),
       userId: json['userId'],
+      linkMeet: json['linkMeet'] as String?,
     );
   }
 
@@ -30,6 +33,7 @@ class NotificationModel {
       'text': text,
       'date': date.toIso8601String(),
       'userId': userId,
+      'linkMeet': linkMeet,
     };
   }
 }

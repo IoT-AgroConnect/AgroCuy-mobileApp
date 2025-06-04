@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:agrocuy/features/notifications/data/models/notification_model.dart';
 import 'package:agrocuy/features/notifications/data/datasources/notification_remote_data_source.dart';
-import 'package:agrocuy/features/notifications/domain/repositories/notification_repository.dart';
 
 import '../domain/repositories/notification_fake_repository.dart';
 import 'notificationCardScreen.dart';
@@ -14,15 +13,15 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  late final NotificationRepository _repository;
-  //late final NotificationFakeRepository _repository;
+  //late final NotificationRepository _repository;
+  late final NotificationFakeRepository _repository;
   late Future<List<NotificationModel>> _notificationsFuture;
 
   @override
   void initState() {
     super.initState();
-     _repository = NotificationRepository(NotificationRemoteDataSource());
-    //_repository = NotificationFakeRepository();
+     //_repository = NotificationRepository(NotificationRemoteDataSource());
+    _repository = NotificationFakeRepository();
     _notificationsFuture = _repository.getAll();
   }
 
