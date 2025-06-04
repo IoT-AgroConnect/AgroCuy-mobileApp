@@ -3,6 +3,7 @@ import '../data/models/advisor_model.dart';
 import '../data/models/review_model.dart'; // Asegúrate de tener esta clase
 import '../data/datasources/advisor_remote_data_source.dart';
 import '../domain/repositories/advisor_repository.dart';
+import 'ScheduleBookingScreen.dart';
 
 class AdvisorDetailScreen extends StatelessWidget {
   const AdvisorDetailScreen({super.key});
@@ -62,14 +63,22 @@ class AdvisorDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    // Aquí podrías ir a una pantalla de agendamiento
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Funcionalidad de reserva pendiente")),
-                    );
+                  onPressed: () async {
+                    final scheduleRepository = ScheduleRepositoryImpl(); // Asegúrate de importar esto
+                    final advisorSchedules = await scheduleRepository.getSchedulesByAdvisor(advisor.id);
+
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ScheduleBookingScreen(schedules: advisorSchedules),
+                        ),
+                      );
+                    }
                   },
-                  child: const Text('Reservar Cita'),
+                  child: const Text("Reservar Cita"),
                 ),
+
                 const SizedBox(height: 32),
                 if (advisor.reviews != null && advisor.reviews!.isNotEmpty) ...[
                   const Align(
