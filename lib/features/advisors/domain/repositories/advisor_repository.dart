@@ -1,11 +1,9 @@
-import 'package:agrocuy/infrastructure/services/session_service.dart'; // Assuming this path for your SessionService
+import 'package:agrocuy/infrastructure/services/session_service.dart';
 import '../../data/datasources/advisor_remote_data_source.dart';
-import '../../data/models/advisor_model.dart'; // Import the AdvisorModel
-
+import '../../data/models/advisor_model.dart';
 
 class AdvisorRepository {
   final AdvisorRemoteDataSource remoteDataSource;
-
   final SessionService _session = SessionService();
 
   AdvisorRepository(this.remoteDataSource);
@@ -15,23 +13,8 @@ class AdvisorRepository {
     return remoteDataSource.getAdvisors(token);
   }
 
-  Future<AdvisorModel> getById(String id) async {
+  Future<AdvisorModel> getById(int id) async {
     final token = _session.getToken();
     return remoteDataSource.getAdvisorById(id, token);
-  }
-
-  Future<void> create(AdvisorModel advisor) async {
-    final token = _session.getToken();
-    return remoteDataSource.createAdvisor(advisor, token);
-  }
-
-  Future<void> update(String id, AdvisorModel advisor) async {
-    final token = _session.getToken();
-    return remoteDataSource.updateAdvisor(id, advisor.toJson(), token);
-  }
-
-  Future<void> delete(String id) async {
-    final token = _session.getToken();
-    return remoteDataSource.deleteAdvisor(id, token);
   }
 }
