@@ -109,7 +109,7 @@ class _RecursoFormViewState extends State<RecursoFormView> {
                           fecha: _fechaController.text,
                           cantidad: _cantidadController.text,
                           observaciones: _observacionesController.text,
-                          imagen: "assets/saco.png",
+                          imagen: "lib/assets/images/saco.png",
                         );
                         Navigator.pop(context, recurso);
                       }

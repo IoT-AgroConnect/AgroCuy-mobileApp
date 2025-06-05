@@ -17,7 +17,7 @@ class _RecursosListViewState extends State<RecursosListView> {
       fecha: "2021-05-20",
       cantidad: "3 Kg",
       observaciones: "Suplemento vitamínico",
-      imagen: "assets/saco.png",
+      imagen: "lib/assets/images/saco.png",
     ),
   ];
 

@@ -16,14 +16,14 @@ class _GastosListViewState extends State<GastosListView> {
       fecha: "2024-05-02",
       monto: "S/.500",
       detalle: "Compra de alimento para cuyes de todo el mes",
-      imagen: "assets/chanchito.png",
+      imagen: "lib/assets/images/chanchito.png",
     ),
     Gasto(
       tipo: "Alimento",
       fecha: "2024-05-01",
       monto: "S/.10",
       detalle: "Almuerzo",
-      imagen: "assets/chanchito.png",
+      imagen: "lib/assets/images/chanchito.png",
     ),
   ];
 

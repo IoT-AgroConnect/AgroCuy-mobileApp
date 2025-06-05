@@ -4,7 +4,6 @@ import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 import 'features/advisors/presentation/advisorDetailScreen.dart';
 import 'firebase_options.dart';
 import 'infrastructure/services/session_service.dart';
-import 'package:agrocuy/features/home/presentation/screens/granja_home_view.dart';
 
 
 void main() async {
@@ -28,7 +27,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      home: const GranjaHomeView(),
+      home: const LoginScreen(),
       routes: {
         '/advisor-detail': (context) => const AdvisorDetailScreen(),
       },
