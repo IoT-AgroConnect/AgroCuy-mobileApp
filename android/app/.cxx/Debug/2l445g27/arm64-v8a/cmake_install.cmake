@@ -1,4 +1,4 @@
-# Install script for directory: C:/src/flutter_windows_3.24.3-stable/flutter/packages/flutter_tools/gradle/src/main/groovy
+# Install script for images: C:/src/flutter_windows_3.24.3-stable/flutter/packages/flutter_tools/gradle/src/main/groovy
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -37,7 +37,7 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "TRUE")
 endif()
 
-# Set default install directory permissions.
+# Set default install images permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
   set(CMAKE_OBJDUMP "C:/Users/jcuad/AppData/Local/Android/Sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/windows-x86_64/bin/llvm-objdump.exe")
 endif()

@@ -1,9 +1,11 @@
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
+import 'features/advisors/presentation/advisorDetailScreen.dart';
 import 'firebase_options.dart';
-import 'package:intl/date_symbol_data_local.dart'; // <-- agregado
 import 'infrastructure/services/session_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,14 +28,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'AgroCuy',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-          useMaterial3: true,
-        ),
-        debugShowCheckedModeBanner: false,
-        home:
-            const LoginScreen() // le puse const, porque tu CalendarScreen es const
-        );
+      title: 'AgroCuy',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+        useMaterial3: true,
+      ),
+      debugShowCheckedModeBanner: false,
+      home: const LoginScreen(),
+      routes: {
+        '/advisor-detail': (context) => const AdvisorDetailScreen(),
+      },
+    );
   }
 }
