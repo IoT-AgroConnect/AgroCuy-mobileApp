@@ -74,6 +74,8 @@ flutter:
     - lib/assets/images/thumbs1.png
     - lib/assets/images/thumbs2.jpg
     - lib/assets/images/notis_cuy.png
+    - assets/images/chanchito.png
+    - assets/images/saco.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

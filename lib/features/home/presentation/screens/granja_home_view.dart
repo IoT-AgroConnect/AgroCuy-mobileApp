@@ -20,7 +20,7 @@ class GranjaHomeView extends StatelessWidget {
               context,
               title: "Gestión de recursos",
               subtitle: "¡Gestione los recursos de su granja aquí!",
-              image: "assets/saco.png",
+              image: "assets/images/saco.png",
               onPressed: () {
                 Navigator.push(
                   context,
@@ -33,7 +33,7 @@ class GranjaHomeView extends StatelessWidget {
               context,
               title: "Gestión de Gastos",
               subtitle: "¡Gestione los gastos de su granja aquí!",
-              image: "assets/chanchito.png",
+              image: "assets/images/chanchito.png",
               onPressed: () {
                 Navigator.push(
                   context,
