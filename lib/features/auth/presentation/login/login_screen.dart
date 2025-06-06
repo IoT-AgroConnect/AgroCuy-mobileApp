@@ -38,8 +38,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final loginData = await _authRepository.login(email, password);
+
+      // Tomar el token y el userId del loginData
       final token = loginData['token'];
       final userId = loginData['id'];
+      await SessionService().setToken(token);
 
       final userData = await _authRepository.getUserData(userId);
       final role = (userData['roles'] as List).first;
