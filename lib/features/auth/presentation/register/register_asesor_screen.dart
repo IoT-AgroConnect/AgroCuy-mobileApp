@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:agrocuy/infrastructure/services/base_service.dart';
+import 'package:agrocuy/infrastructure/services/firebase_api.dart';
 import 'package:agrocuy/features/auth/presentation/welcome/welcome_screen.dart';
-
-import '../../../../infrastructure/services/firebase_api.dart';
 
 class AsesorFormScreen extends StatefulWidget {
   final int userId;
@@ -27,6 +27,7 @@ class AsesorFormScreen extends StatefulWidget {
 }
 
 class _AsesorFormScreenState extends State<AsesorFormScreen> {
+  final _service = BaseService(); // COMPOSICIÓN
   final _ubicacionController = TextEditingController();
   final _fechaNacimientoController = TextEditingController();
   final _profesionController = TextEditingController();
@@ -73,7 +74,6 @@ class _AsesorFormScreenState extends State<AsesorFormScreen> {
     }
 
     try {
-      // Subimos la imagen a Firebase y obtenemos la URL
       final fotoUrl = await FirebaseApi.uploadImage(_fotoPerfil!);
 
       final body = {
@@ -89,11 +89,8 @@ class _AsesorFormScreenState extends State<AsesorFormScreen> {
       };
 
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/v1/advisors'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
+        Uri.parse('${_service.baseUrl}/advisors'),
+        headers: _service.getHeaders(widget.token),
         body: jsonEncode(body),
       );
 
@@ -109,7 +106,6 @@ class _AsesorFormScreenState extends State<AsesorFormScreen> {
       print('Error inesperado: $e');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

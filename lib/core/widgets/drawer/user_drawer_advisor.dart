@@ -32,7 +32,7 @@ class UserDrawerAdvisor extends StatelessWidget {
           CircleAvatar(radius: 40, backgroundImage: NetworkImage(photoUrl)),
           const SizedBox(height: 10),
           Text(fullname, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-          Text('@$username', style: const TextStyle(color: Colors.white70)),
+          Text('@${username.split('@').first}', style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 30),
           _buildItem("Clientes", () {}),
           _buildItem("Notificaciones", () {}),
