@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 import 'package:agrocuy/features/publications/presentation/publication_list_advisor_screen.dart';
+import 'package:agrocuy/features/calendar/presentation/screens/CalendarScreenAdvisor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserDrawerAdvisor extends StatelessWidget {
@@ -31,8 +32,13 @@ class UserDrawerAdvisor extends StatelessWidget {
           const SizedBox(height: 20),
           CircleAvatar(radius: 40, backgroundImage: NetworkImage(photoUrl)),
           const SizedBox(height: 10),
-          Text(fullname, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-          Text('@${username.split('@').first}', style: const TextStyle(color: Colors.white70)),
+          Text(fullname,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white)),
+          Text('@${username.split('@').first}',
+              style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 30),
           _buildItem("Clientes", () {}),
           _buildItem("Notificaciones", () {}),
@@ -50,7 +56,19 @@ class UserDrawerAdvisor extends StatelessWidget {
             );
           }),
           _buildItem("Horarios", () {}),
-          _buildItem("Calendario", () {}),
+          _buildItem("Calendario", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CalendarScreenAdvisor(
+                  advisorId: advisorId,
+                  fullname: fullname,
+                  username: username,
+                  photoUrl: photoUrl,
+                ),
+              ),
+            );
+          }),
           const Spacer(),
           _logoutButton(context),
         ],
@@ -71,7 +89,8 @@ class UserDrawerAdvisor extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.brown,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         onPressed: () async {
           final prefs = await SharedPreferences.getInstance();
@@ -80,12 +99,12 @@ class UserDrawerAdvisor extends StatelessWidget {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
+            (route) => false,
           );
         },
-        child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
+        child:
+            const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
       ),
     );
   }
-
 }
