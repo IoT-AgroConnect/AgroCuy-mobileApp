@@ -78,7 +78,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void _updateSelectedEvents() {
     if (_selectedDay != null) {
-      final key = DateTime.utc(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
+      final key = DateTime.utc(
+          _selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
       _selectedEvents = _events[key] ?? [];
     }
   }
@@ -147,7 +148,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -373,7 +375,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: priorityColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
@@ -486,8 +489,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   String _getMonthName(int month) {
     const months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre'
     ];
     return months[month - 1];
   }
@@ -506,7 +519,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Nueva Cita'),
-        content: const Text('Función para agregar nueva cita\n(Por implementar)'),
+        content:
+            const Text('Función para agregar nueva cita\n(Por implementar)'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

@@ -6,6 +6,7 @@ import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 
 import '../../../features/advisors/presentation/advisorListScreen.dart';
 import '../../../features/animals/presentation/AnimalsScreen.dart';
+import '../../../features/configuration/presentation/ConfigurationScreen.dart';
 import '../../../features/home/presentation/screens/granja_home_view.dart';
 import '../../../features/notifications/presentation/notificationFullScreen.dart';
 
@@ -141,7 +142,20 @@ class UserDrawerBreeder extends StatelessWidget {
           ListTile(
             title: const Text('Configuración',
                 style: TextStyle(color: Colors.white)),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ConfigurationScreen(
+                    userId: userId ?? 0,
+                    fullname: fullname,
+                    username: username,
+                    photoUrl: photoUrl,
+                    role: role ?? 'ROLE_BREEDER',
+                  ),
+                ),
+              );
+            },
           ),
 
           const Spacer(),
