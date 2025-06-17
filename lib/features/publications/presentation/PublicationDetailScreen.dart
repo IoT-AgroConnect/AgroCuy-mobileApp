@@ -14,17 +14,16 @@ import 'PublicationFormScreen.dart';
 class PublicationDetailScreen extends StatefulWidget {
   final int id;
 
-  const PublicationDetailScreen({
-    super.key,
-    required this.id
-  });
+  const PublicationDetailScreen({super.key, required this.id});
 
   @override
-  State<PublicationDetailScreen> createState() => _PublicationDetailScreenState();
+  State<PublicationDetailScreen> createState() =>
+      _PublicationDetailScreenState();
 }
 
 class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
-  final PublicationRepository _repository = PublicationRepository(PublicationRemoteDataSource());
+  final PublicationRepository _repository =
+      PublicationRepository(PublicationRemoteDataSource());
   final AuthRepository _authRepository = AuthRepository(AuthRemoteDataSource());
 
   PublicationModel? _publication;
@@ -52,6 +51,7 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
       setState(() => _isLoading = false);
     }
   }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -87,7 +87,8 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
           ),
         ),
       );
-    }    final pub = _publication!;
+    }
+    final pub = _publication!;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFE3B3),
@@ -176,7 +177,8 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
                     ? Image.network(
                         pub.image,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildImagePlaceholder(),
                       )
                     : _buildImagePlaceholder(),
               ),
@@ -203,16 +205,19 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.green.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.green.withOpacity(0.5)),
+                            border: Border.all(
+                                color: Colors.green.withOpacity(0.5)),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.lightbulb, size: 16, color: Colors.green),
+                              Icon(Icons.lightbulb,
+                                  size: 16, color: Colors.green),
                               SizedBox(width: 4),
                               Text(
                                 'Tips',
@@ -227,13 +232,15 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
                         ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFF8B4513).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            DateFormat('dd/MM/yy').format(DateTime.parse(pub.date)),
+                            DateFormat('dd/MM/yy')
+                                .format(DateTime.parse(pub.date)),
                             style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF8B4513),
@@ -321,7 +328,8 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
                                 ),
                               ),
                               Text(
-                                DateFormat('dd/MM/yyyy').format(DateTime.parse(pub.date)),
+                                DateFormat('dd/MM/yyyy')
+                                    .format(DateTime.parse(pub.date)),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
@@ -528,4 +536,3 @@ class _PublicationDetailScreenState extends State<PublicationDetailScreen> {
     }
   }
 }
-

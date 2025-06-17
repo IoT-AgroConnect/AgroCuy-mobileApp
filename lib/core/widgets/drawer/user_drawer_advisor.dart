@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 import 'package:agrocuy/features/publications/presentation/publication_list_advisor_screen.dart';
 import 'package:agrocuy/features/calendar/presentation/screens/CalendarScreenAdvisor.dart';
+import 'package:agrocuy/features/schedules/presentation/ScheduleScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserDrawerAdvisor extends StatelessWidget {
@@ -55,7 +56,19 @@ class UserDrawerAdvisor extends StatelessWidget {
               ),
             );
           }),
-          _buildItem("Horarios", () {}),
+          _buildItem("Horarios", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ScheduleScreen(
+                  advisorId: advisorId,
+                  fullname: fullname,
+                  username: username,
+                  photoUrl: photoUrl,
+                ),
+              ),
+            );
+          }),
           _buildItem("Calendario", () {
             Navigator.push(
               context,

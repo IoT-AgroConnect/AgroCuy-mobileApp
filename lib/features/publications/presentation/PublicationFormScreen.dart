@@ -49,6 +49,7 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
     _descriptionController.dispose();
     super.dispose();
   }
+
   Future<void> _pickImage() async {
     showModalBottomSheet(
       context: context,
@@ -84,7 +85,8 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                     onTap: () async {
                       Navigator.pop(context);
                       final picker = ImagePicker();
-                      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+                      final pickedFile =
+                          await picker.pickImage(source: ImageSource.camera);
                       if (pickedFile != null) {
                         setState(() {
                           _imageFile = File(pickedFile.path);
@@ -96,7 +98,8 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF8B4513).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF8B4513).withOpacity(0.3)),
+                        border: Border.all(
+                            color: const Color(0xFF8B4513).withOpacity(0.3)),
                       ),
                       child: const Column(
                         children: [
@@ -124,7 +127,8 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                     onTap: () async {
                       Navigator.pop(context);
                       final picker = ImagePicker();
-                      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                      final pickedFile =
+                          await picker.pickImage(source: ImageSource.gallery);
                       if (pickedFile != null) {
                         setState(() {
                           _imageFile = File(pickedFile.path);
@@ -136,7 +140,8 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF8B4513).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF8B4513).withOpacity(0.3)),
+                        border: Border.all(
+                            color: const Color(0xFF8B4513).withOpacity(0.3)),
                       ),
                       child: const Column(
                         children: [
@@ -198,11 +203,9 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              widget.publication == null 
-                ? 'Publicación creada exitosamente' 
-                : 'Publicación actualizada exitosamente'
-            ),
+            content: Text(widget.publication == null
+                ? 'Publicación creada exitosamente'
+                : 'Publicación actualizada exitosamente'),
             backgroundColor: Colors.green,
           ),
         );
@@ -226,12 +229,15 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFE3B3),
       appBar: appBarMenu(
-        title: widget.publication == null ? 'Nueva Publicación' : 'Editar Publicación',
+        title: widget.publication == null
+            ? 'Nueva Publicación'
+            : 'Editar Publicación',
       ),
       body: Form(
         key: _formKey,
@@ -278,7 +284,9 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.publication == null ? 'Crear Publicación' : 'Editar Publicación',
+                            widget.publication == null
+                                ? 'Crear Publicación'
+                                : 'Editar Publicación',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -286,8 +294,8 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                             ),
                           ),
                           Text(
-                            widget.publication == null 
-                                ? 'Comparte tus conocimientos' 
+                            widget.publication == null
+                                ? 'Comparte tus conocimientos'
                                 : 'Actualiza el contenido',
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.8),
@@ -363,7 +371,8 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _pickImage,
                           icon: const Icon(Icons.add_photo_alternate),
-                          label: Text(_imageFile != null || (_imageUrl != null && _imageUrl!.isNotEmpty)
+                          label: Text(_imageFile != null ||
+                                  (_imageUrl != null && _imageUrl!.isNotEmpty)
                               ? 'Cambiar imagen'
                               : 'Seleccionar imagen'),
                           style: ElevatedButton.styleFrom(
@@ -456,7 +465,8 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                   controller: _descriptionController,
                   maxLines: 6,
                   decoration: const InputDecoration(
-                    hintText: 'Escribe el contenido de tu publicación...\n\nComparte consejos, técnicas o experiencias que puedan ayudar a otros criadores de cuyes.',
+                    hintText:
+                        'Escribe el contenido de tu publicación...\n\nComparte consejos, técnicas o experiencias que puedan ayudar a otros criadores de cuyes.',
                     prefixIcon: Padding(
                       padding: EdgeInsets.only(top: 12),
                       child: Icon(
@@ -514,10 +524,14 @@ class _PublicationFormScreenState extends State<PublicationFormScreen> {
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(widget.publication == null ? Icons.publish : Icons.update),
+                            Icon(widget.publication == null
+                                ? Icons.publish
+                                : Icons.update),
                             const SizedBox(width: 8),
                             Text(
-                              widget.publication == null ? 'Publicar' : 'Actualizar',
+                              widget.publication == null
+                                  ? 'Publicar'
+                                  : 'Actualizar',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
