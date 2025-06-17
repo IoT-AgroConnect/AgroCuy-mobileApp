@@ -4,6 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 
+import '../../../features/advisors/presentation/advisorListScreen.dart';
+import '../../../features/home/presentation/screens/granja_home_view.dart';
+import '../../../features/notifications/presentation/notificationFullScreen.dart';
+import '../../../features/publications/presentation/publication_list_advisor_screen.dart';
+
 
 class UserDrawerBreeder extends StatelessWidget {
   final String fullname;
@@ -44,11 +49,21 @@ class UserDrawerBreeder extends StatelessWidget {
           // Opciones del menú
           ListTile(
             title: const Text('Mi granja', style: TextStyle(color: Colors.white)),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const GranjaHomeView()),
+              );
+            },
           ),
           ListTile(
             title: const Text('Asesores', style: TextStyle(color: Colors.white)),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdvisorListScreen()),
+              );
+            },
           ),
           ListTile(
             title: const Text('Mis Animales', style: TextStyle(color: Colors.white)),
@@ -57,10 +72,16 @@ class UserDrawerBreeder extends StatelessWidget {
           ListTile(
             title: const Text('Publicaciones', style: TextStyle(color: Colors.white)),
             onTap: () {},
+
           ),
           ListTile(
             title: const Text('Notificaciones', style: TextStyle(color: Colors.white)),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationScreen()),
+              );
+            },
           ),
           ListTile(
             title: const Text('Calendario', style: TextStyle(color: Colors.white)),

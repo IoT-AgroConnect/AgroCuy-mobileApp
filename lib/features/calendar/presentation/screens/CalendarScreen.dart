@@ -96,7 +96,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   _buildAppointmentTile('Lidia Sanchez', '03 de Mayo - 09:00'),
                   _buildAppointmentTile('Mateo Karl', '09 de Mayo - 13:00'),
                   _buildAppointmentTile('Homero Lane', '11 de Mayo - 15:00'),
-                  _buildAppointmentTile('Carla Pereyra', '03 de Junio - 18:00'),
+                  _buildAppointmentTile('Sebastian Ramirez', '03 de Junio - 18:00'),
                 ],
               ),
             ],
