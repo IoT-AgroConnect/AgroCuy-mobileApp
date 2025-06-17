@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:agrocuy/core/widgets/app_bar_menu.dart';
+import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
+import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
 import 'package:agrocuy/features/notifications/data/models/notification_model.dart';
-import 'package:agrocuy/features/notifications/data/datasources/notification_remote_data_source.dart';
 
 import '../domain/repositories/notification_fake_repository.dart';
 import 'notificationCardScreen.dart';
 
 class NotificationScreen extends StatefulWidget {
-  const NotificationScreen({Key? key}) : super(key: key);
+  final int userId;
+  final String fullname;
+  final String username;
+  final String photoUrl;
+  final String role;
+
+  const NotificationScreen({
+    Key? key,
+    required this.userId,
+    required this.username,
+    required this.fullname,
+    required this.photoUrl,
+    required this.role,
+  }) : super(key: key);
 
   @override
   State<NotificationScreen> createState() => _NotificationScreenState();
@@ -20,7 +35,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
-     //_repository = NotificationRepository(NotificationRemoteDataSource());
+    //_repository = NotificationRepository(NotificationRemoteDataSource());
     _repository = NotificationFakeRepository();
     _notificationsFuture = _repository.getAll();
   }
@@ -28,10 +43,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notificaciones'),
-        centerTitle: true,
-      ),
+      backgroundColor: const Color(0xFFFFE3B3),
+      appBar: const appBarMenu(title: 'Notificaciones'),
+      drawer: widget.role == 'ROLE_BREEDER'
+          ? UserDrawerBreeder(
+              fullname: widget.fullname,
+              username: widget.username.split('@').first,
+              photoUrl: widget.photoUrl,
+              userId: widget.userId,
+              role: widget.role,
+            )
+          : UserDrawerAdvisor(
+              fullname: widget.fullname,
+              username: widget.username.split('@').first,
+              photoUrl: widget.photoUrl,
+              advisorId: widget.userId,
+            ),
       body: FutureBuilder<List<NotificationModel>>(
         future: _notificationsFuture,
         builder: (context, snapshot) {
@@ -48,7 +75,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
             padding: const EdgeInsets.all(16),
             itemCount: notifications.length,
             itemBuilder: (context, index) {
-              return NotificationCard(notification: notifications[index], onDelete: () {  },);
+              return NotificationCard(
+                notification: notifications[index],
+                onDelete: () {},
+              );
             },
           );
         },

@@ -56,7 +56,15 @@ class UserDrawerBreeder extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const GranjaHomeView()),
+                MaterialPageRoute(
+                  builder: (_) => GranjaHomeView(
+                    userId: userId ?? 0,
+                    fullname: fullname,
+                    username: username,
+                    photoUrl: photoUrl,
+                    role: role ?? 'ROLE_BREEDER',
+                  ),
+                ),
               );
             },
           ),
@@ -86,7 +94,15 @@ class UserDrawerBreeder extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                MaterialPageRoute(
+                  builder: (_) => NotificationScreen(
+                    userId: userId ?? 0,
+                    fullname: fullname,
+                    username: username,
+                    photoUrl: photoUrl,
+                    role: role ?? 'ROLE_BREEDER',
+                  ),
+                ),
               );
             },
           ),

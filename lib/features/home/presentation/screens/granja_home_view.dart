@@ -1,16 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:agrocuy/core/widgets/app_bar_menu.dart';
+import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
+import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
 import '../../../resources/presentation/recursos_list_view.dart';
 import '../../../expenses/presentation/gastos_list_view.dart';
 
 class GranjaHomeView extends StatelessWidget {
-  const GranjaHomeView({super.key});
+  final int userId;
+  final String fullname;
+  final String username;
+  final String photoUrl;
+  final String role;
 
+  const GranjaHomeView({
+    super.key,
+    required this.userId,
+    required this.username,
+    required this.fullname,
+    required this.photoUrl,
+    required this.role,
+  });
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("AgroCuy - Mi Granja"),
-      ),
+      backgroundColor: const Color(0xFFFFE3B3),
+      appBar: const appBarMenu(title: 'Mi Granja'),
+      drawer: role == 'ROLE_BREEDER'
+          ? UserDrawerBreeder(
+              fullname: fullname,
+              username: username.split('@').first,
+              photoUrl: photoUrl,
+              userId: userId,
+              role: role,
+            )
+          : UserDrawerAdvisor(
+              fullname: fullname,
+              username: username.split('@').first,
+              photoUrl: photoUrl,
+              advisorId: userId,
+            ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -47,7 +75,8 @@ class GranjaHomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(BuildContext context, {
+  Widget _buildCard(
+    BuildContext context, {
     required String title,
     required String subtitle,
     required String image,
@@ -88,28 +117,19 @@ class GranjaHomeView extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(
-                      color: Colors.deepOrange,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 19,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.deepOrange,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 19,
+                        ),
                   ),
                   const SizedBox(height: 30),
                   Text(
                     subtitle,
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(
-                      color: Colors.black87,
-                      fontSize: 15,
-
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.black87,
+                          fontSize: 15,
+                        ),
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton(
