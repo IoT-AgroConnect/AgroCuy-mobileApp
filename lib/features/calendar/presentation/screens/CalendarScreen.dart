@@ -1,10 +1,25 @@
 // calendar_screen.dart
 import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar_menu.dart';
+import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
+import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  final int userId;
+  final String fullname;
+  final String username;
+  final String photoUrl;
+  final String role;
+
+  const CalendarScreen({
+    super.key,
+    required this.userId,
+    required this.username,
+    required this.fullname,
+    required this.photoUrl,
+    required this.role,
+  });
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -20,12 +35,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFE3B3),
       appBar: const appBarMenu(title: 'Calendario'),
+      drawer: widget.role == 'ROLE_BREEDER'
+          ? UserDrawerBreeder(
+              fullname: widget.fullname,
+              username: widget.username.split('@').first,
+              photoUrl: widget.photoUrl,
+              userId: widget.userId,
+              role: widget.role,
+            )
+          : UserDrawerAdvisor(
+              fullname: widget.fullname,
+              username: widget.username.split('@').first,
+              photoUrl: widget.photoUrl,
+              advisorId: widget.userId,
+            ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -43,12 +71,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   });
                 },
                 eventLoader: (day) {
-                  return _events[DateTime.utc(day.year, day.month, day.day)] ?? [];
+                  return _events[DateTime.utc(day.year, day.month, day.day)] ??
+                      [];
                 },
                 headerStyle: const HeaderStyle(
                   formatButtonVisible: false,
                   titleCentered: true,
-                  titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  titleTextStyle:
+                      TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 calendarStyle: const CalendarStyle(
                   todayDecoration: BoxDecoration(
@@ -66,13 +96,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
                 locale: 'es_ES',
               ),
-
               const SizedBox(height: 16),
-
               Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFCDE990),
                     borderRadius: BorderRadius.circular(30),
@@ -86,9 +115,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               ListView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -96,7 +123,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   _buildAppointmentTile('Lidia Sanchez', '03 de Mayo - 09:00'),
                   _buildAppointmentTile('Mateo Karl', '09 de Mayo - 13:00'),
                   _buildAppointmentTile('Homero Lane', '11 de Mayo - 15:00'),
-                  _buildAppointmentTile('Sebastian Ramirez', '03 de Junio - 18:00'),
+                  _buildAppointmentTile(
+                      'Sebastian Ramirez', '03 de Junio - 18:00'),
                 ],
               ),
             ],
