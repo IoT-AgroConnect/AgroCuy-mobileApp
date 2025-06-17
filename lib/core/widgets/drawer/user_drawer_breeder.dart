@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 
 import '../../../features/advisors/presentation/advisorListScreen.dart';
+import '../../../features/animals/presentation/AnimalsScreen.dart';
 import '../../../features/home/presentation/screens/granja_home_view.dart';
 import '../../../features/notifications/presentation/notificationFullScreen.dart';
 
@@ -81,7 +82,20 @@ class UserDrawerBreeder extends StatelessWidget {
           ListTile(
             title: const Text('Mis Animales',
                 style: TextStyle(color: Colors.white)),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AnimalsScreen(
+                    userId: userId ?? 0,
+                    fullname: fullname,
+                    username: username,
+                    photoUrl: photoUrl,
+                    role: role ?? 'ROLE_BREEDER',
+                  ),
+                ),
+              );
+            },
           ),
           ListTile(
             title: const Text('Publicaciones',
