@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'features/advisors/presentation/advisorDetailScreen.dart';
 import 'firebase_options.dart';
 import 'infrastructure/services/session_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 
 void main() async {
@@ -13,9 +14,11 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+
+
   await SessionService().init();
 
-
+  await initializeDateFormatting('es_ES');
 
   runApp(const MyApp());
 }

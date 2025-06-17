@@ -15,7 +15,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     DateTime.utc(2025, 5, 3): ['Lidia Sanchez - 09:00'],
     DateTime.utc(2025, 5, 9): ['Mateo Karl - 13:00'],
     DateTime.utc(2025, 5, 11): ['Homero Lane - 15:00'],
-    DateTime.utc(2025, 6, 3): ['Carla Pereyra - 18:00'],
+    DateTime.utc(2025, 6, 3): ['Sebastian Ramirez - 18:00'],
   };
 
   DateTime _focusedDay = DateTime.now();

@@ -1,7 +1,9 @@
+import 'package:agrocuy/features/calendar/presentation/screens/CalendarScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 class UserDrawerBreeder extends StatelessWidget {
   final String fullname;
@@ -38,19 +40,44 @@ class UserDrawerBreeder extends StatelessWidget {
           ),
           Text('@$username', style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 30),
-          ...[
-            'Mi granja',
-            'Asesores',
-            'Mis Animales',
-            'Publicaciones',
-            'Notificaciones',
-            'Calendario',
-            'Configuración',
-          ].map((item) => ListTile(
-            title: Text(item, style: const TextStyle(color: Colors.white)),
+
+          // Opciones del menú
+          ListTile(
+            title: const Text('Mi granja', style: TextStyle(color: Colors.white)),
             onTap: () {},
-          )),
+          ),
+          ListTile(
+            title: const Text('Asesores', style: TextStyle(color: Colors.white)),
+            onTap: () {},
+          ),
+          ListTile(
+            title: const Text('Mis Animales', style: TextStyle(color: Colors.white)),
+            onTap: () {},
+          ),
+          ListTile(
+            title: const Text('Publicaciones', style: TextStyle(color: Colors.white)),
+            onTap: () {},
+          ),
+          ListTile(
+            title: const Text('Notificaciones', style: TextStyle(color: Colors.white)),
+            onTap: () {},
+          ),
+          ListTile(
+            title: const Text('Calendario', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CalendarScreen()),
+              );
+            },
+          ),
+          ListTile(
+            title: const Text('Configuración', style: TextStyle(color: Colors.white)),
+            onTap: () {},
+          ),
+
           const Spacer(),
+
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: ElevatedButton(
