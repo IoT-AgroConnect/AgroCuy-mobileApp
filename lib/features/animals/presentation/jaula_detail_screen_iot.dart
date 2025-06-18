@@ -311,7 +311,8 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                             ),
                           ),
                         ],
-                      ),                      const SizedBox(height: 8),
+                      ),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
@@ -329,11 +330,11 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                               'Humedad',
                               '${_getHumidity()}%',
                               Icons.opacity,
-                              _getHumidity() >= 40 && _getHumidity() <= 70 
-                                  ? Colors.blue 
+                              _getHumidity() >= 40 && _getHumidity() <= 70
+                                  ? Colors.blue
                                   : Colors.orange,
-                              _getHumidity() >= 40 && _getHumidity() <= 70 
-                                  ? 'Ideal' 
+                              _getHumidity() >= 40 && _getHumidity() <= 70
+                                  ? 'Ideal'
                                   : 'Regular',
                             ),
                           ),
@@ -357,8 +358,12 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                               'Última limpieza',
                               _getLastCleaningDate(),
                               Icons.history,
-                              _getDaysToClean() > 2 ? Colors.grey : Colors.orange,
-                              _getDaysToClean() > 2 ? 'Reciente' : 'Hace tiempo',
+                              _getDaysToClean() > 2
+                                  ? Colors.grey
+                                  : Colors.orange,
+                              _getDaysToClean() > 2
+                                  ? 'Reciente'
+                                  : 'Hace tiempo',
                             ),
                           ),
                         ],
@@ -402,7 +407,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),                      // Horarios de comida
+                      const SizedBox(height: 16), // Horarios de comida
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -433,7 +438,8 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFFF9800),
                                     borderRadius: BorderRadius.circular(8),
@@ -775,6 +781,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
       ),
     );
   }
+
   // Métodos IoT para obtener datos simulados de sensores
   Map<String, dynamic> _getJaulaStatus() {
     final waterLevel = _getWaterLevel();
@@ -826,12 +833,14 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
 
   int _getDaysToClean() {
     // Simulación basada en fecha de creación de la jaula
-    final daysSinceCreation = DateTime.now().difference(widget.jaula.fechaCreacion).inDays;
+    final daysSinceCreation =
+        DateTime.now().difference(widget.jaula.fechaCreacion).inDays;
     return 7 - (daysSinceCreation % 7);
   }
 
   String _getLastCleaningDate() {
-    final lastCleaning = DateTime.now().subtract(Duration(days: 7 - _getDaysToClean()));
+    final lastCleaning =
+        DateTime.now().subtract(Duration(days: 7 - _getDaysToClean()));
     return _formatDate(lastCleaning);
   }
 
@@ -1033,17 +1042,21 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
 
   Widget _buildDeviceStatusGrid() {
     final deviceStatus = _getDeviceStatus();
-    
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        _buildDeviceChip('Sensor Agua', deviceStatus['sensor_agua'], Icons.sensors),
-        _buildDeviceChip('Sensor Temp.', deviceStatus['sensor_temp'], Icons.thermostat),
+        _buildDeviceChip(
+            'Sensor Agua', deviceStatus['sensor_agua'], Icons.sensors),
+        _buildDeviceChip(
+            'Sensor Temp.', deviceStatus['sensor_temp'], Icons.thermostat),
         _buildDeviceChip('Sensor CO2', deviceStatus['sensor_co2'], Icons.air),
-        _buildDeviceChip('Dispensador', deviceStatus['dispensador_comida'], Icons.restaurant),
-        _buildDeviceChip('Sist. Limpieza', deviceStatus['sistema_limpieza'], Icons.cleaning_services),
-        if (deviceStatus['camara']) 
+        _buildDeviceChip('Dispensador', deviceStatus['dispensador_comida'],
+            Icons.restaurant),
+        _buildDeviceChip('Sist. Limpieza', deviceStatus['sistema_limpieza'],
+            Icons.cleaning_services),
+        if (deviceStatus['camara'])
           _buildDeviceChip('Cámara', deviceStatus['camara'], Icons.videocam),
       ],
     );
@@ -1053,7 +1066,9 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+        color: isActive
+            ? Colors.green.withOpacity(0.2)
+            : Colors.red.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isActive ? Colors.green : Colors.red,
@@ -1091,13 +1106,14 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
   Widget _buildFeedingScheduleList() {
     final schedules = _getFeedingSchedules();
     final mealNames = ['Desayuno', 'Almuerzo', 'Cena'];
-    
+
     return Column(
       children: schedules.asMap().entries.map((entry) {
         final index = entry.key;
         final time = entry.value;
-        final mealName = index < mealNames.length ? mealNames[index] : 'Comida ${index + 1}';
-        
+        final mealName =
+            index < mealNames.length ? mealNames[index] : 'Comida ${index + 1}';
+
         return Container(
           margin: const EdgeInsets.only(bottom: 6),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
