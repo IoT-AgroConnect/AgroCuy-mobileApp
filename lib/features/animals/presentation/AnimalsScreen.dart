@@ -4,7 +4,7 @@ import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
 import '../data/models/jaula_model.dart';
 import '../data/repositories/animals_repository.dart';
-import 'jaula_detail_screen.dart';
+import 'jaula_detail_screen_iot.dart';
 import 'jaula_form_screen.dart';
 
 class AnimalsScreen extends StatefulWidget {

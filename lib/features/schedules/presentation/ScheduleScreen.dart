@@ -24,8 +24,9 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  final ScheduleRepository _repository = ScheduleRepository(ScheduleRemoteDataSourceImpl());
-  
+  final ScheduleRepository _repository =
+      ScheduleRepository(ScheduleRemoteDataSourceImpl());
+
   List<ScheduleModel> _schedules = [];
   bool _isLoading = true;
   DateTime _selectedMonth = DateTime.now();
@@ -41,9 +42,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       setState(() {
         _isLoading = true;
       });
-      
-      final schedules = await _repository.getSchedulesByAdvisor(widget.advisorId);
-      
+
+      final schedules =
+          await _repository.getSchedulesByAdvisor(widget.advisorId);
+
       setState(() {
         _schedules = schedules;
         _isLoading = false;
@@ -53,7 +55,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       setState(() {
         _isLoading = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -101,7 +103,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       try {
         await _repository.deleteSchedule(id);
         await _loadSchedules();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -122,6 +124,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       }
     }
   }
+
   void _showAddScheduleDialog() {
     showDialog(
       context: context,
@@ -145,7 +148,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   List<ScheduleModel> _getSchedulesForDate(DateTime date) {
-    final dateString = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dateString =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     return _schedules.where((schedule) => schedule.date == dateString).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
@@ -155,8 +159,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     for (final schedule in _schedules) {
       try {
         final parts = schedule.date.split('-');
-        final date = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-        if (!dates.any((d) => d.year == date.year && d.month == date.month && d.day == date.day)) {
+        final date = DateTime(
+            int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+        if (!dates.any((d) =>
+            d.year == date.year &&
+            d.month == date.month &&
+            d.day == date.day)) {
           dates.add(date);
         }
       } catch (e) {
@@ -166,23 +174,35 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     dates.sort();
     return dates;
   }
+
   void _changeMonth(int delta) {
     setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + delta, 1);
+      _selectedMonth =
+          DateTime(_selectedMonth.year, _selectedMonth.month + delta, 1);
     });
   }
 
   String _getMonthYearString(DateTime date) {
     final months = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre'
     ];
     return '${months[date.month - 1]} ${date.year}';
   }
 
   Widget _buildSchedulesList() {
     final uniqueDates = _getUniqueDatesWithSchedules();
-    
+
     if (uniqueDates.isEmpty) {
       return _buildEmptyState();
     }
@@ -193,7 +213,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       itemBuilder: (context, index) {
         final date = uniqueDates[index];
         final dateSchedules = _getSchedulesForDate(date);
-        
+
         return _buildDateScheduleCard(date, dateSchedules);
       },
     );
@@ -217,7 +237,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               ),
             )
           : Column(
-              children: [                // Header con navegación mensual
+              children: [
+                // Header con navegación mensual
                 Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(20),
@@ -243,7 +264,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         children: [
                           IconButton(
                             onPressed: () => _changeMonth(-1),
-                            icon: const Icon(Icons.chevron_left, color: Colors.white, size: 30),
+                            icon: const Icon(Icons.chevron_left,
+                                color: Colors.white, size: 30),
                           ),
                           Column(
                             children: [
@@ -266,13 +288,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           ),
                           IconButton(
                             onPressed: () => _changeMonth(1),
-                            icon: const Icon(Icons.chevron_right, color: Colors.white, size: 30),
+                            icon: const Icon(Icons.chevron_right,
+                                color: Colors.white, size: 30),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(20),
@@ -346,11 +370,21 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
     );
   }
-  Widget _buildDateScheduleCard(DateTime date, List<ScheduleModel> dateSchedules) {
-    final dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+  Widget _buildDateScheduleCard(
+      DateTime date, List<ScheduleModel> dateSchedules) {
+    final dayNames = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
     final dayName = dayNames[date.weekday - 1];
     final dateString = '${date.day}/${date.month}/${date.year}';
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -408,7 +442,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
@@ -513,14 +548,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         hour: int.parse(endTime.split(':')[0]),
         minute: int.parse(endTime.split(':')[1]),
       );
-      
+
       final startMinutes = start.hour * 60 + start.minute;
       final endMinutes = end.hour * 60 + end.minute;
       final durationMinutes = endMinutes - startMinutes;
-      
+
       final hours = durationMinutes ~/ 60;
       final minutes = durationMinutes % 60;
-      
+
       if (hours > 0 && minutes > 0) {
         return '$hours h ${minutes} min';
       } else if (hours > 0) {
@@ -576,7 +611,7 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
@@ -600,7 +635,7 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         if (isStartTime) {
@@ -615,9 +650,10 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
   String _formatTimeOfDay(TimeOfDay time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
+
   Future<void> _addSchedule() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_selectedDate == null || _startTime == null || _endTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -631,7 +667,7 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
     // Validar que la hora de inicio sea menor que la de fin
     final startMinutes = _startTime!.hour * 60 + _startTime!.minute;
     final endMinutes = _endTime!.hour * 60 + _endTime!.minute;
-    
+
     if (startMinutes >= endMinutes) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -647,8 +683,9 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
     });
 
     try {
-      final dateString = '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
-      
+      final dateString =
+          '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
+
       final newSchedule = ScheduleModel(
         id: 0,
         date: dateString,
@@ -658,7 +695,7 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
       );
 
       await widget.repository.createSchedule(newSchedule);
-      
+
       if (mounted) {
         Navigator.pop(context);
         widget.onScheduleAdded();
@@ -729,7 +766,7 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),              // Fecha
+              const SizedBox(height: 20), // Fecha
               const Text(
                 'Fecha',
                 style: TextStyle(
@@ -749,15 +786,16 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today, color: Color(0xFF8B4513)),
+                      const Icon(Icons.calendar_today,
+                          color: Color(0xFF8B4513)),
                       const SizedBox(width: 8),
                       Text(
-                        _selectedDate != null 
+                        _selectedDate != null
                             ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
                             : 'Seleccionar fecha',
                         style: TextStyle(
-                          color: _selectedDate != null 
-                              ? Colors.black 
+                          color: _selectedDate != null
+                              ? Colors.black
                               : Colors.grey,
                         ),
                       ),
@@ -793,15 +831,16 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.access_time, color: Color(0xFF8B4513)),
+                                const Icon(Icons.access_time,
+                                    color: Color(0xFF8B4513)),
                                 const SizedBox(width: 8),
                                 Text(
-                                  _startTime != null 
+                                  _startTime != null
                                       ? _formatTimeOfDay(_startTime!)
                                       : 'Seleccionar',
                                   style: TextStyle(
-                                    color: _startTime != null 
-                                        ? Colors.black 
+                                    color: _startTime != null
+                                        ? Colors.black
                                         : Colors.grey,
                                   ),
                                 ),
@@ -835,15 +874,16 @@ class _AddScheduleDialogState extends State<AddScheduleDialog> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.access_time, color: Color(0xFF8B4513)),
+                                const Icon(Icons.access_time,
+                                    color: Color(0xFF8B4513)),
                                 const SizedBox(width: 8),
                                 Text(
-                                  _endTime != null 
+                                  _endTime != null
                                       ? _formatTimeOfDay(_endTime!)
                                       : 'Seleccionar',
                                   style: TextStyle(
-                                    color: _endTime != null 
-                                        ? Colors.black 
+                                    color: _endTime != null
+                                        ? Colors.black
                                         : Colors.grey,
                                   ),
                                 ),
@@ -937,7 +977,7 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
   @override
   void initState() {
     super.initState();
-    
+
     // Parse existing date
     final dateParts = widget.schedule.date.split('-');
     _selectedDate = DateTime(
@@ -945,14 +985,14 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
       int.parse(dateParts[1]),
       int.parse(dateParts[2]),
     );
-    
+
     // Parse existing times
     final startParts = widget.schedule.startTime.split(':');
     _startTime = TimeOfDay(
       hour: int.parse(startParts[0]),
       minute: int.parse(startParts[1]),
     );
-    
+
     final endParts = widget.schedule.endTime.split(':');
     _endTime = TimeOfDay(
       hour: int.parse(endParts[0]),
@@ -978,7 +1018,7 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
@@ -1002,7 +1042,7 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         if (isStartTime) {
@@ -1017,13 +1057,14 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
   String _formatTimeOfDay(TimeOfDay time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
+
   Future<void> _updateSchedule() async {
     if (!_formKey.currentState!.validate()) return;
 
     // Validar que la hora de inicio sea menor que la de fin
     final startMinutes = _startTime.hour * 60 + _startTime.minute;
     final endMinutes = _endTime.hour * 60 + _endTime.minute;
-    
+
     if (startMinutes >= endMinutes) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1039,16 +1080,18 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
     });
 
     try {
-      final dateString = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
-      
+      final dateString =
+          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+
       final updatedSchedule = widget.schedule.copyWith(
         date: dateString,
         startTime: _formatTimeOfDay(_startTime),
         endTime: _formatTimeOfDay(_endTime),
       );
 
-      await widget.repository.updateSchedule(widget.schedule.id, updatedSchedule);
-      
+      await widget.repository
+          .updateSchedule(widget.schedule.id, updatedSchedule);
+
       if (mounted) {
         Navigator.pop(context);
         widget.onScheduleUpdated();
@@ -1119,7 +1162,7 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),              // Fecha
+              const SizedBox(height: 20), // Fecha
               const Text(
                 'Fecha',
                 style: TextStyle(
@@ -1139,9 +1182,11 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today, color: Color(0xFF8B4513)),
+                      const Icon(Icons.calendar_today,
+                          color: Color(0xFF8B4513)),
                       const SizedBox(width: 8),
-                      Text('${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}'),
+                      Text(
+                          '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}'),
                     ],
                   ),
                 ),
@@ -1174,7 +1219,8 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.access_time, color: Color(0xFF8B4513)),
+                                const Icon(Icons.access_time,
+                                    color: Color(0xFF8B4513)),
                                 const SizedBox(width: 8),
                                 Text(_formatTimeOfDay(_startTime)),
                               ],
@@ -1207,7 +1253,8 @@ class _EditScheduleDialogState extends State<EditScheduleDialog> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.access_time, color: Color(0xFF8B4513)),
+                                const Icon(Icons.access_time,
+                                    color: Color(0xFF8B4513)),
                                 const SizedBox(width: 8),
                                 Text(_formatTimeOfDay(_endTime)),
                               ],

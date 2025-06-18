@@ -56,14 +56,19 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
 
   @override
   Future<List<ScheduleModel>> getSchedulesByAdvisor(int advisorId) async {
-    await Future.delayed(const Duration(milliseconds: 500)); // Simular delay de red
-    return _schedules.where((schedule) => schedule.advisorId == advisorId).toList();
+    await Future.delayed(
+        const Duration(milliseconds: 500)); // Simular delay de red
+    return _schedules
+        .where((schedule) => schedule.advisorId == advisorId)
+        .toList();
   }
 
   @override
   Future<ScheduleModel> createSchedule(ScheduleModel schedule) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    final newId = _schedules.isNotEmpty ? _schedules.map((s) => s.id).reduce((a, b) => a > b ? a : b) + 1 : 1;
+    final newId = _schedules.isNotEmpty
+        ? _schedules.map((s) => s.id).reduce((a, b) => a > b ? a : b) + 1
+        : 1;
     final newSchedule = schedule.copyWith(id: newId);
     _schedules.add(newSchedule);
     return newSchedule;
