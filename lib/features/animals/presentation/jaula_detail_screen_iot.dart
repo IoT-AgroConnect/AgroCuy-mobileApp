@@ -311,8 +311,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 8),
+                      ),                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
@@ -327,6 +326,24 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: _buildIoTCard(
+                              'Humedad',
+                              '${_getHumidity()}%',
+                              Icons.opacity,
+                              _getHumidity() >= 40 && _getHumidity() <= 70 
+                                  ? Colors.blue 
+                                  : Colors.orange,
+                              _getHumidity() >= 40 && _getHumidity() <= 70 
+                                  ? 'Ideal' 
+                                  : 'Regular',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildIoTCard(
                               'Limpieza',
                               '${_getDaysToClean()} días',
                               Icons.cleaning_services,
@@ -334,12 +351,58 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                               _getDaysToClean() > 2 ? 'Programada' : 'Urgente',
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildIoTCard(
+                              'Última limpieza',
+                              _getLastCleaningDate(),
+                              Icons.history,
+                              _getDaysToClean() > 2 ? Colors.grey : Colors.orange,
+                              _getDaysToClean() > 2 ? 'Reciente' : 'Hace tiempo',
+                            ),
+                          ),
                         ],
                       ),
 
                       const SizedBox(height: 16),
 
-                      // Horarios de comida
+                      // Estado de dispositivos IoT
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2196F3).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF2196F3).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.device_hub,
+                                  color: Color(0xFF2196F3),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Estado de Dispositivos',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2196F3),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDeviceStatusGrid(),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),                      // Horarios de comida
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -360,42 +423,34 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
-                                const Text(
-                                  'Horarios de Alimentación',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFFFF9800),
+                                const Expanded(
+                                  child: Text(
+                                    'Horarios de Alimentación',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFFF9800),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFF9800),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '${_getFeedingSchedules().length} comidas/día',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: _getFeedingSchedules().map((schedule) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: const Color(0xFFFF9800)
-                                          .withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    schedule,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFFFF9800),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
+                            const SizedBox(height: 12),
+                            _buildFeedingScheduleList(),
                           ],
                         ),
                       ),
@@ -720,55 +775,86 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
       ),
     );
   }
-
   // Métodos IoT para obtener datos simulados de sensores
   Map<String, dynamic> _getJaulaStatus() {
     final waterLevel = _getWaterLevel();
     final temperature = _getTemperature();
     final co2Level = _getCO2Level();
     final daysToClean = _getDaysToClean();
+    final humidity = _getHumidity();
 
     final isWaterOk = waterLevel > 500;
     final isTempOk = temperature >= 18 && temperature <= 24;
     final isCO2Ok = co2Level < 1000;
     final isCleanOk = daysToClean > 2;
+    final isHumidityOk = humidity >= 40 && humidity <= 70;
 
-    if (isWaterOk && isTempOk && isCO2Ok && isCleanOk) {
+    if (isWaterOk && isTempOk && isCO2Ok && isCleanOk && isHumidityOk) {
       return {
         'color': Colors.green,
         'icon': Icons.check_circle,
-        'text': 'Todo OK'
+        'text': 'Excelente'
       };
     } else if (!isWaterOk || !isCO2Ok || !isCleanOk) {
-      return {'color': Colors.red, 'icon': Icons.warning, 'text': 'Atención'};
+      return {'color': Colors.red, 'icon': Icons.warning, 'text': 'Crítico'};
     } else {
       return {'color': Colors.orange, 'icon': Icons.info, 'text': 'Regular'};
     }
   }
 
   int _getWaterLevel() {
-    // Simulación de datos IoT - En producción vendría de API
-    return 750; // ml
+    // Simulación de datos IoT basada en la jaula específica
+    final baseLevel = 600 + (widget.jaula.id * 50) % 400;
+    return baseLevel;
   }
 
   int _getTemperature() {
-    // Simulación de datos IoT - En producción vendría de API
-    return 22; // °C
+    // Simulación de temperatura variable según la jaula
+    final baseTemp = 20 + (widget.jaula.id % 5);
+    return baseTemp;
   }
 
   int _getCO2Level() {
-    // Simulación de datos IoT - En producción vendría de API
-    return 800; // ppm
+    // Simulación de CO2 basada en ocupación de la jaula (valor inmediato)
+    return 750 + (widget.jaula.id * 30) % 200;
+  }
+
+  int _getHumidity() {
+    // Simulación de humedad
+    return 55 + (widget.jaula.id % 10);
   }
 
   int _getDaysToClean() {
-    // Simulación de datos IoT - En producción vendría de API
-    return 5; // días
+    // Simulación basada en fecha de creación de la jaula
+    final daysSinceCreation = DateTime.now().difference(widget.jaula.fechaCreacion).inDays;
+    return 7 - (daysSinceCreation % 7);
+  }
+
+  String _getLastCleaningDate() {
+    final lastCleaning = DateTime.now().subtract(Duration(days: 7 - _getDaysToClean()));
+    return _formatDate(lastCleaning);
   }
 
   List<String> _getFeedingSchedules() {
-    // Simulación de horarios de alimentación
-    return ['7:00 AM', '12:00 PM', '6:00 PM'];
+    // Horarios personalizados por jaula
+    final schedules = [
+      ['6:30 AM', '12:00 PM', '6:30 PM'],
+      ['7:00 AM', '1:00 PM', '7:00 PM'],
+      ['6:00 AM', '11:30 AM', '5:30 PM'],
+    ];
+    return schedules[widget.jaula.id % schedules.length];
+  }
+
+  Map<String, dynamic> _getDeviceStatus() {
+    // Estado de dispositivos IoT
+    return {
+      'sensor_agua': _getWaterLevel() > 300,
+      'sensor_temp': true,
+      'sensor_co2': _getCO2Level() < 1200,
+      'dispensador_comida': true,
+      'sistema_limpieza': _getDaysToClean() > 0,
+      'camara': widget.jaula.id % 2 == 0, // Algunas jaulas tienen cámara
+    };
   }
 
   Color _getEstadoColor(String estado) {
@@ -942,6 +1028,155 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
           ),
         );
       }
+    }
+  }
+
+  Widget _buildDeviceStatusGrid() {
+    final deviceStatus = _getDeviceStatus();
+    
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _buildDeviceChip('Sensor Agua', deviceStatus['sensor_agua'], Icons.sensors),
+        _buildDeviceChip('Sensor Temp.', deviceStatus['sensor_temp'], Icons.thermostat),
+        _buildDeviceChip('Sensor CO2', deviceStatus['sensor_co2'], Icons.air),
+        _buildDeviceChip('Dispensador', deviceStatus['dispensador_comida'], Icons.restaurant),
+        _buildDeviceChip('Sist. Limpieza', deviceStatus['sistema_limpieza'], Icons.cleaning_services),
+        if (deviceStatus['camara']) 
+          _buildDeviceChip('Cámara', deviceStatus['camara'], Icons.videocam),
+      ],
+    );
+  }
+
+  Widget _buildDeviceChip(String name, bool isActive, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive ? Colors.green : Colors.red,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: isActive ? Colors.green : Colors.red,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            name,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isActive ? Colors.green[700] : Colors.red[700],
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            isActive ? Icons.check_circle : Icons.error,
+            size: 12,
+            color: isActive ? Colors.green : Colors.red,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedingScheduleList() {
+    final schedules = _getFeedingSchedules();
+    final mealNames = ['Desayuno', 'Almuerzo', 'Cena'];
+    
+    return Column(
+      children: schedules.asMap().entries.map((entry) {
+        final index = entry.key;
+        final time = entry.value;
+        final mealName = index < mealNames.length ? mealNames[index] : 'Comida ${index + 1}';
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: const Color(0xFFFF9800).withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF9800).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  _getMealIcon(index),
+                  size: 16,
+                  color: const Color(0xFFFF9800),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      mealName,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFFF9800),
+                      ),
+                    ),
+                    Text(
+                      'Programado',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF9800),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  time,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  IconData _getMealIcon(int index) {
+    switch (index) {
+      case 0:
+        return Icons.wb_sunny; // Desayuno
+      case 1:
+        return Icons.wb_cloudy; // Almuerzo
+      case 2:
+        return Icons.nights_stay; // Cena
+      default:
+        return Icons.restaurant;
     }
   }
 }
