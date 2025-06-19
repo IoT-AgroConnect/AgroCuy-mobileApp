@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../data/models/gasto.dart';
 import 'gasto_form_view.dart';
+import 'package:agrocuy/infrastructure/services/shared_gasto_service.dart';
+
+final SharedGastoService _storage = SharedGastoService();
 
 class GastosListView extends StatefulWidget {
   const GastosListView({super.key});
@@ -10,22 +13,24 @@ class GastosListView extends StatefulWidget {
 }
 
 class _GastosListViewState extends State<GastosListView> {
-  final List<Gasto> gastos = [
-    Gasto(
-      tipo: "Alimento",
-      fecha: "2024-05-02",
-      monto: "S/.500",
-      detalle: "Compra de alimento para cuyes de todo el mes",
-      imagen: "lib/assets/images/chanchito.png",
-    ),
-    Gasto(
-      tipo: "Alimento",
-      fecha: "2024-05-01",
-      monto: "S/.10",
-      detalle: "Almuerzo",
-      imagen: "lib/assets/images/chanchito.png",
-    ),
-  ];
+  List<Gasto> gastos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGastos();
+  }
+
+  Future<void> _loadGastos() async {
+    final loaded = await _storage.getGastos();
+    setState(() {
+      gastos = loaded;
+    });
+  }
+
+  Future<void> _saveGastos() async {
+    await _storage.saveGastos(gastos);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +58,7 @@ class _GastosListViewState extends State<GastosListView> {
                       setState(() {
                         gastos.add(nuevoGasto);
                       });
+                      _saveGastos();
                     }
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
@@ -143,6 +149,7 @@ class _GastosListViewState extends State<GastosListView> {
                         final i = gastos.indexOf(gasto);
                         gastos[i] = editado;
                       });
+                      _saveGastos();
                     }
                   },
                   icon: const Icon(Icons.edit, size: 16),
@@ -155,6 +162,7 @@ class _GastosListViewState extends State<GastosListView> {
                     setState(() {
                       gastos.remove(gasto);
                     });
+                    _saveGastos();
                   },
                   icon: const Icon(Icons.delete, size: 16),
                   label: const Text("Delete"),

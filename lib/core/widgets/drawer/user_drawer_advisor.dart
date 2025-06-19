@@ -3,6 +3,9 @@ import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 import 'package:agrocuy/features/publications/presentation/publication_list_advisor_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:agrocuy/features/home/presentation/screens/granja_home_view.dart';
+
+
 class UserDrawerAdvisor extends StatelessWidget {
   final String fullname;
   final String username;
@@ -34,6 +37,15 @@ class UserDrawerAdvisor extends StatelessWidget {
           Text(fullname, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
           Text('@${username.split('@').first}', style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 30),
+          //solo estoy agregando esto para redirigir a la pantalla de mi granja
+          //_buildItem("Mi granja", () {
+          //  Navigator.pop(context); //  CIERRA el Drawer
+          //  Navigator.push(
+          //    context,
+          //    MaterialPageRoute(builder: (_) => const GranjaHomeView()),
+          //  );
+        //  }),
+          //solo estoy agregando esto para redirigir a la pantalla de mi granja
           _buildItem("Clientes", () {}),
           _buildItem("Notificaciones", () {}),
           _buildItem("Mis Publicaciones", () {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'recurso_form_view.dart';
 import '../data/models/recurso.dart';
+import 'package:agrocuy/infrastructure/services/shared_recurso_service.dart';
 
 class RecursosListView extends StatefulWidget {
   const RecursosListView({super.key});
@@ -10,16 +11,46 @@ class RecursosListView extends StatefulWidget {
 }
 
 class _RecursosListViewState extends State<RecursosListView> {
-  final List<Recurso> recursos = [
-    Recurso(
-      nombre: "Alfalfa",
-      tipo: "Alimento",
-      fecha: "2021-05-20",
-      cantidad: "3 Kg",
-      observaciones: "Suplemento vitamínico",
-      imagen: "lib/assets/images/saco.png",
-    ),
-  ];
+  List<Recurso> recursos = [];
+  final SharedRecursoService _storage = SharedRecursoService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecursos();
+  }
+
+  Future<void> _loadRecursos() async {
+    final data = await _storage.loadRecursos();
+    setState(() {
+      recursos = data;
+    });
+  }
+
+  Future<void> _saveRecursos() async {
+    await _storage.saveRecursos(recursos);
+  }
+
+  void _addRecurso(Recurso recurso) {
+    setState(() {
+      recursos.add(recurso);
+    });
+    _saveRecursos();
+  }
+
+  void _updateRecurso(int index, Recurso recurso) {
+    setState(() {
+      recursos[index] = recurso;
+    });
+    _saveRecursos();
+  }
+
+  void _deleteRecurso(int index) {
+    setState(() {
+      recursos.removeAt(index);
+    });
+    _saveRecursos();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +66,7 @@ class _RecursosListViewState extends State<RecursosListView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {}, // Filtro futuro
                   icon: const Icon(Icons.filter_list),
                   label: const Text("Filtrar"),
                   style: ElevatedButton.styleFrom(
@@ -51,9 +82,7 @@ class _RecursosListViewState extends State<RecursosListView> {
                       ),
                     );
                     if (nuevoRecurso != null && mounted) {
-                      setState(() {
-                        recursos.add(nuevoRecurso);
-                      });
+                      _addRecurso(nuevoRecurso);
                     }
                   },
                   child: const Text("Registro de nuevo recurso"),
@@ -74,11 +103,13 @@ class _RecursosListViewState extends State<RecursosListView> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
+              child: recursos.isEmpty
+                  ? const Center(child: Text("No hay recursos registrados."))
+                  : ListView.builder(
                 itemCount: recursos.length,
                 itemBuilder: (context, index) {
                   final recurso = recursos[index];
-                  return _recursoCard(context, recurso);
+                  return _recursoCard(context, recurso, index);
                 },
               ),
             ),
@@ -99,7 +130,7 @@ class _RecursosListViewState extends State<RecursosListView> {
     );
   }
 
-  Widget _recursoCard(BuildContext context, Recurso recurso) {
+  Widget _recursoCard(BuildContext context, Recurso recurso, int index) {
     return Card(
       color: Colors.yellow.shade100,
       margin: const EdgeInsets.only(bottom: 12),
@@ -147,10 +178,7 @@ class _RecursosListViewState extends State<RecursosListView> {
                       ),
                     );
                     if (recursoEditado != null && mounted) {
-                      setState(() {
-                        final index = recursos.indexOf(recurso);
-                        recursos[index] = recursoEditado;
-                      });
+                      _updateRecurso(index, recursoEditado);
                     }
                   },
                   icon: const Icon(Icons.edit, size: 16),
@@ -163,9 +191,7 @@ class _RecursosListViewState extends State<RecursosListView> {
                 const SizedBox(height: 8),
                 ElevatedButton.icon(
                   onPressed: () {
-                    setState(() {
-                      recursos.remove(recurso);
-                    });
+                    _deleteRecurso(index);
                   },
                   icon: const Icon(Icons.delete, size: 16),
                   label: const Text("Delete"),
