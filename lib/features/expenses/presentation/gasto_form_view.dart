@@ -95,7 +95,7 @@ class _GastoFormViewState extends State<GastoFormView> {
                           fecha: _fechaController.text,
                           monto: _montoController.text,
                           detalle: _detalleController.text,
-                          imagen: "lib/assets/images/chanchito.png",
+                          imagen: "lib/assets/images/chanchito.png", concepto: '',
                         );
                         Navigator.pop(context, gasto);
                       }
