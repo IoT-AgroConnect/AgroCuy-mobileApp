@@ -1,16 +1,27 @@
+import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
+import 'features/advisors/presentation/advisorDetailScreen.dart';
 import 'firebase_options.dart';
-// Shared preferences import
 import 'infrastructure/services/session_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+import 'package:agrocuy/features/home/presentation/screens/granja_home_view.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+
+
   await SessionService().init();
+
+  await initializeDateFormatting('es_ES');
+
   runApp(const MyApp());
 }
 
@@ -27,6 +38,8 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       home: const LoginScreen(),
+     // home: const GranjaHomeView(),
+
     );
   }
 }

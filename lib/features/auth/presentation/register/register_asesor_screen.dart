@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:agrocuy/infrastructure/services/base_service.dart';
+import 'package:agrocuy/infrastructure/services/firebase_api.dart';
 import 'package:agrocuy/features/auth/presentation/welcome/welcome_screen.dart';
 
 class AsesorFormScreen extends StatefulWidget {
@@ -25,6 +27,7 @@ class AsesorFormScreen extends StatefulWidget {
 }
 
 class _AsesorFormScreenState extends State<AsesorFormScreen> {
+  final _service = BaseService(); // COMPOSICIÓN
   final _ubicacionController = TextEditingController();
   final _fechaNacimientoController = TextEditingController();
   final _profesionController = TextEditingController();
@@ -55,52 +58,53 @@ class _AsesorFormScreenState extends State<AsesorFormScreen> {
         _profesionController.text.isEmpty ||
         _experienciaController.text.isEmpty ||
         _descripcionController.text.isEmpty) {
-      showError('Completa todos los campos');
+      print('Completa todos los campos');
       return;
     }
 
     final fechaRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
     if (!fechaRegex.hasMatch(_fechaNacimientoController.text)) {
-      showError('La fecha debe tener el formato aaaa-mm-dd');
+      print('La fecha debe tener el formato aaaa-mm-dd');
       return;
     }
 
-    final fotoName = _fotoPerfil?.path.split('/').last ?? "sin_foto.jpg";
-
-    final body = {
-      "fullname": widget.name,
-      "location": _ubicacionController.text,
-      "birthdate": _fechaNacimientoController.text,
-      "description": _descripcionController.text,
-      "occupation": _profesionController.text,
-      "experience": int.tryParse(_experienciaController.text) ?? 0,
-      "photo": fotoName,
-      "rating": 0,
-      "userId": widget.userId,
-    };
+    if (_fotoPerfil == null) {
+      print('Selecciona una imagen de perfil');
+      return;
+    }
 
     try {
+      final fotoUrl = await FirebaseApi.uploadImage(_fotoPerfil!);
+
+      final body = {
+        "fullname": widget.name,
+        "location": _ubicacionController.text,
+        "birthdate": _fechaNacimientoController.text,
+        "description": _descripcionController.text,
+        "occupation": _profesionController.text,
+        "experience": int.tryParse(_experienciaController.text) ?? 0,
+        "photo": fotoUrl,
+        "rating": 0,
+        "userId": widget.userId,
+      };
+
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/v1/advisors'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
+        Uri.parse('${_service.baseUrl}/advisors'),
+        headers: _service.getHeaders(widget.token),
         body: jsonEncode(body),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        );
       } else {
-        showError('Error: ${response.statusCode}');
+        print('Error al registrar: ${response.statusCode}');
       }
     } catch (e) {
-      showError('Ocurrió un error inesperado');
+      print('Error inesperado: $e');
     }
-  }
-
-  void showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

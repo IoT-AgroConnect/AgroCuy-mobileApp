@@ -39,11 +39,13 @@ dependencies:
   http: ^0.13.6
   http_parser: ^4.0.2
   intl: ^0.18.1
-  firebase_core: ^2.24.0
-  firebase_storage: ^11.5.5
+  firebase_core: ^3.13.1
+  firebase_storage: ^12.4.6
+  firebase_storage_web: ^3.10.13
   uuid: ^4.0.0
   shared_preferences: ^2.2.2
-
+  url_launcher: ^6.3.1
+  table_calendar: ^3.0.6
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -71,6 +73,9 @@ flutter:
     - lib/assets/images/logo.png
     - lib/assets/images/thumbs1.png
     - lib/assets/images/thumbs2.jpg
+    - lib/assets/images/notis_cuy.png
+    - lib/assets/images/chanchito.png
+    - lib/assets/images/saco.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

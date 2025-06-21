@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:agrocuy/features/auth/presentation/login/login_screen.dart';
 import 'package:agrocuy/features/publications/presentation/publication_list_advisor_screen.dart';
+import 'package:agrocuy/features/calendar/presentation/screens/CalendarScreenAdvisor.dart';
+import 'package:agrocuy/features/schedules/presentation/ScheduleScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:agrocuy/features/home/presentation/screens/granja_home_view.dart';
+
 
 class UserDrawerAdvisor extends StatelessWidget {
   final String fullname;
@@ -31,9 +36,23 @@ class UserDrawerAdvisor extends StatelessWidget {
           const SizedBox(height: 20),
           CircleAvatar(radius: 40, backgroundImage: NetworkImage(photoUrl)),
           const SizedBox(height: 10),
-          Text(fullname, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-          Text('@$username', style: const TextStyle(color: Colors.white70)),
+          Text(fullname,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white)),
+          Text('@${username.split('@').first}',
+              style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 30),
+          //solo estoy agregando esto para redirigir a la pantalla de mi granja
+          //_buildItem("Mi granja", () {
+          //  Navigator.pop(context); //  CIERRA el Drawer
+          //  Navigator.push(
+          //    context,
+          //    MaterialPageRoute(builder: (_) => const GranjaHomeView()),
+          //  );
+        //  }),
+          //solo estoy agregando esto para redirigir a la pantalla de mi granja
           _buildItem("Clientes", () {}),
           _buildItem("Notificaciones", () {}),
           _buildItem("Mis Publicaciones", () {
@@ -49,8 +68,32 @@ class UserDrawerAdvisor extends StatelessWidget {
               ),
             );
           }),
-          _buildItem("Horarios", () {}),
-          _buildItem("Calendario", () {}),
+          _buildItem("Horarios", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ScheduleScreen(
+                  advisorId: advisorId,
+                  fullname: fullname,
+                  username: username,
+                  photoUrl: photoUrl,
+                ),
+              ),
+            );
+          }),
+          _buildItem("Calendario", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CalendarScreenAdvisor(
+                  advisorId: advisorId,
+                  fullname: fullname,
+                  username: username,
+                  photoUrl: photoUrl,
+                ),
+              ),
+            );
+          }),
           const Spacer(),
           _logoutButton(context),
         ],
@@ -71,7 +114,8 @@ class UserDrawerAdvisor extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.brown,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         onPressed: () async {
           final prefs = await SharedPreferences.getInstance();
@@ -80,12 +124,12 @@ class UserDrawerAdvisor extends StatelessWidget {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
+            (route) => false,
           );
         },
-        child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
+        child:
+            const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
       ),
     );
   }
-
 }

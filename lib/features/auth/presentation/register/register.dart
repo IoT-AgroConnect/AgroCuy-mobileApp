@@ -5,6 +5,7 @@ import 'package:agrocuy/core/widgets/app_bar.dart';
 import 'package:agrocuy/features/auth/presentation/register/register_asesor_screen.dart';
 import 'package:agrocuy/features/auth/presentation/register/register_criador_screen.dart';
 import 'package:agrocuy/features/auth/presentation/terms_conditions/terms_and_conditions.dart';
+import 'package:agrocuy/infrastructure/services/base_service.dart'; // <-- Importamos BaseService
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,6 +15,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _service = BaseService(); // <-- Composición
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -51,7 +53,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               _buildInput(_confirmPasswordController, 'Confirmar contraseña', isPassword: true),
               const SizedBox(height: 24),
-
               Row(
                 children: [
                   Checkbox(
@@ -81,7 +82,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -89,7 +89,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   _buildRoleButton('Asesor'),
                 ],
               ),
-
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -155,7 +154,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         final String selectedRole = role == 'Criador' ? 'ROLE_BREEDER' : 'ROLE_ADVISOR';
 
         final registered = await registerUser(
-          name: _nameController.text,
           username: _emailController.text,
           password: _passwordController.text,
           role: selectedRole,
@@ -203,14 +201,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<bool> registerUser({
-    required String name,
     required String username,
     required String password,
     required String role,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/v1/authentication/sign-up'),
+        Uri.parse('${_service.baseUrl}/authentication/sign-up'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "username": username,
@@ -232,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/v1/authentication/sign-in'),
+        Uri.parse('${_service.baseUrl}/authentication/sign-in'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "username": username,

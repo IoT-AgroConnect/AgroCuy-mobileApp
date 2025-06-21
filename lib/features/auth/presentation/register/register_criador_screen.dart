@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:agrocuy/features/auth/presentation/welcome/welcome_screen.dart';
+import 'package:agrocuy/infrastructure/services/base_service.dart';
 
 class CriadorFormScreen extends StatefulWidget {
   final int userId;
@@ -23,6 +24,7 @@ class CriadorFormScreen extends StatefulWidget {
 }
 
 class _CriadorFormScreenState extends State<CriadorFormScreen> {
+  final service = BaseService();
   final _ubicacionController = TextEditingController();
   final _fechaNacimientoController = TextEditingController();
   final _descripcionController = TextEditingController();
@@ -51,11 +53,8 @@ class _CriadorFormScreenState extends State<CriadorFormScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/v1/breeders'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
+        Uri.parse('${service.baseUrl}/breeders'),
+        headers: service.getHeaders(widget.token),
         body: jsonEncode(body),
       );
 
