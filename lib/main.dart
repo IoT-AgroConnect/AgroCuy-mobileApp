@@ -40,9 +40,6 @@ class MyApp extends StatelessWidget {
       home: const LoginScreen(),
      // home: const GranjaHomeView(),
 
-      routes: {
-        '/advisor-detail': (context) => const AdvisorDetailScreen(),
-      },
     );
   }
 }

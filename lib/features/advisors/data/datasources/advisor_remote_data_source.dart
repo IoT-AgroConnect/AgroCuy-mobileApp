@@ -14,7 +14,7 @@ class AdvisorRemoteDataSource extends BaseService {
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      final List<dynamic> jsonList = jsonDecode(utf8.decode(response.bodyBytes));
       return jsonList.map((e) => AdvisorModel.fromJson(e)).toList();
     } else {
       throw Exception('Error al obtener asesores: ${response.statusCode} ${response.body}');
@@ -31,7 +31,7 @@ class AdvisorRemoteDataSource extends BaseService {
     );
 
     if (response.statusCode == 200) {
-      return AdvisorModel.fromJson(jsonDecode(response.body));
+      return AdvisorModel.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
     } else {
       throw Exception('Error al obtener asesor por ID: ${response.statusCode} ${response.body}');
     }

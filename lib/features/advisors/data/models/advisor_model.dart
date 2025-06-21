@@ -11,7 +11,7 @@ class AdvisorModel {
   final String? photo;
   final double? rating;
   final List<ReviewModel>? reviews;
-  final String userId;
+  final int userId;
 
   AdvisorModel({
     required this.id,
