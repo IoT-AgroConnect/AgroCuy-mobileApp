@@ -1,4 +1,5 @@
 import 'package:agrocuy/features/calendar/presentation/screens/CalendarScreen.dart';
+import 'package:agrocuy/features/home/presentation/screens/HomeScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -101,7 +102,21 @@ class UserDrawerBreeder extends StatelessWidget {
           ListTile(
             title: const Text('Publicaciones',
                 style: TextStyle(color: Colors.white)),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HomeScreen(
+                    userId: userId ?? 0,
+                    fullname: fullname,
+                    username: username,
+                    photoUrl: photoUrl,
+                    role: role ?? 'ROLE_BREEDER',
+                    breederId: userId ?? 0, // Agregar el parámetro faltante
+                  ),
+                ),
+              );
+            },
           ),
           ListTile(
             title: const Text('Notificaciones',

@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar_menu.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
+import 'package:agrocuy/infrastructure/services/animal_service.dart'
+    as animal_svc;
+import 'package:agrocuy/infrastructure/services/sensor_data_service.dart';
+import 'package:agrocuy/infrastructure/services/feeding_schedule_service.dart';
+import 'package:agrocuy/infrastructure/services/acceptable_range_service.dart';
+import 'package:agrocuy/infrastructure/services/session_service.dart';
 import '../data/models/jaula_model.dart';
-import '../data/models/cuy_model.dart';
-import '../data/repositories/animals_repository.dart';
 import 'cuy_form_screen.dart';
 
 class JaulaDetailScreen extends StatefulWidget {
@@ -30,18 +34,87 @@ class JaulaDetailScreen extends StatefulWidget {
 }
 
 class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
-  final AnimalsRepository _repository = AnimalsRepository();
-  late Future<List<CuyModel>> _cuyesFuture;
+  late final animal_svc.AnimalService _animalService;
+  late final SensorDataService _sensorDataService;
+  late final FeedingScheduleService _feedingScheduleService;
+  late final AcceptableRangeService _acceptableRangeService;
+  late final SessionService _sessionService;
+
+  late Future<List<animal_svc.AnimalModel>> _animalsFuture;
+  late Future<List<SensorDataModel>> _sensorDataFuture;
+  late Future<List<FeedingScheduleModel>> _feedingSchedulesFuture;
+  late Future<AcceptableRangeModel?> _acceptableRangesFuture;
+
+  SensorDataModel? _latestSensorData;
+  AcceptableRangeModel? _currentRanges;
+  List<FeedingScheduleModel> _feedingSchedules = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadCuyes();
+    _animalService = animal_svc.AnimalService();
+    _sensorDataService = SensorDataService();
+    _feedingScheduleService = FeedingScheduleService();
+    _acceptableRangeService = AcceptableRangeService();
+    _sessionService = SessionService();
+    _loadData();
   }
 
-  void _loadCuyes() {
+  Future<void> _loadData() async {
     setState(() {
-      _cuyesFuture = _repository.getCuyesByJaulaId(widget.jaula.id);
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Ensure session is initialized
+      await _sessionService.init();
+
+      if (!_animalService.isAuthenticated()) {
+        throw Exception(
+            'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+      }
+
+      // Load all data in parallel
+      _animalsFuture =
+          _animalService.getAnimalsByCageIdWithRetry(widget.jaula.id);
+      _sensorDataFuture =
+          _sensorDataService.getSensorDataByCageWithRetry(widget.jaula.id);
+      _feedingSchedulesFuture = _feedingScheduleService
+          .getFeedingSchedulesByCageWithRetry(widget.jaula.id);
+      _acceptableRangesFuture = _acceptableRangeService
+          .getAcceptableRangesByCageWithRetry(widget.jaula.id);
+
+      // Get latest sensor data for real-time display
+      final sensorDataList = await _sensorDataFuture;
+      if (sensorDataList.isNotEmpty) {
+        _latestSensorData = sensorDataList.last; // Get most recent data
+      }
+
+      // Get current acceptable ranges
+      _currentRanges = await _acceptableRangesFuture;
+
+      // Get feeding schedules
+      _feedingSchedules = await _feedingSchedulesFuture;
+
+      await _animalsFuture; // Wait to catch any errors
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadAnimals() async {
+    setState(() {
+      _animalsFuture =
+          _animalService.getAnimalsByCageIdWithRetry(widget.jaula.id);
     });
   }
 
@@ -64,504 +137,554 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
               photoUrl: widget.photoUrl,
               advisorId: widget.userId,
             ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Breadcrumb de navegación
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
+      body: _isLoading
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.arrow_back_ios,
-                          size: 16,
-                          color: Color(0xFF8B4513),
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'Mis Animales',
-                          style: TextStyle(
-                            color: Color(0xFF8B4513),
-                            fontWeight: FontWeight.w500,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Text(
-                    ' > ',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  Text(
-                    widget.jaula.nombre,
-                    style: const TextStyle(
-                      color: Color(0xFF8B4513),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Cargando datos de la jaula...'),
                 ],
               ),
-            ),
-
-            // Información básica de la jaula
-            Container(
-              margin: const EdgeInsets.all(16),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+            )
+          : _errorMessage != null
+              ? Center(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF8B4513).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
+                      const Icon(Icons.error, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error: $_errorMessage',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadData,
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Breadcrumb de navegación
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            InkWell(
+                              onTap: () => Navigator.pop(context),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.arrow_back_ios,
+                                    size: 16,
+                                    color: Color(0xFF8B4513),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Mis Animales',
+                                    style: TextStyle(
+                                      color: Color(0xFF8B4513),
+                                      fontWeight: FontWeight.w500,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.home_work,
-                              color: Color(0xFF8B4513),
-                              size: 32,
+                            const Text(
+                              ' > ',
+                              style: TextStyle(color: Colors.grey),
                             ),
+                            Text(
+                              widget.jaula.nombre,
+                              style: const TextStyle(
+                                color: Color(0xFF8B4513),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Información básica de la jaula
+                      Container(
+                        margin: const EdgeInsets.all(16),
+                        child: Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  widget.jaula.nombre,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF8B4513),
-                                  ),
-                                ),
-                                Text(
-                                  widget.jaula.descripcion,
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      FutureBuilder<List<CuyModel>>(
-                        future: _cuyesFuture,
-                        builder: (context, snapshot) {
-                          final cantidadCuyes = snapshot.data?.length ?? 0;
-                          final porcentajeOcupacion = (cantidadCuyes /
-                                  widget.jaula.capacidadMaxima *
-                                  100)
-                              .round();
-
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: _buildStatCard(
-                                  'Cuyes',
-                                  '$cantidadCuyes/${widget.jaula.capacidadMaxima}',
-                                  Icons.pets,
-                                  porcentajeOcupacion > 80
-                                      ? Colors.red
-                                      : Colors.green,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _buildStatCard(
-                                  'Ocupación',
-                                  '$porcentajeOcupacion%',
-                                  Icons.analytics,
-                                  porcentajeOcupacion > 80
-                                      ? Colors.red
-                                      : Colors.blue,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _buildStatCard(
-                                  'Creada',
-                                  _formatDate(widget.jaula.fechaCreacion),
-                                  Icons.calendar_today,
-                                  Colors.orange,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Sección IoT
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2196F3).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.sensors,
-                              color: Color(0xFF2196F3),
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Monitoreo IoT',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF8B4513),
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _getJaulaStatus()['color'],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _getJaulaStatus()['icon'],
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _getJaulaStatus()['text'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Sensores principales
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildIoTCard(
-                              'Agua',
-                              '${_getWaterLevel()}ml',
-                              Icons.water_drop,
-                              _getWaterLevel() > 500 ? Colors.blue : Colors.red,
-                              _getWaterLevel() > 500
-                                  ? 'Buen estado'
-                                  : 'Nivel bajo',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildIoTCard(
-                              'Temperatura',
-                              '${_getTemperature()}°C',
-                              Icons.thermostat,
-                              _getTemperature() >= 18 && _getTemperature() <= 24
-                                  ? Colors.green
-                                  : Colors.orange,
-                              _getTemperature() >= 18 && _getTemperature() <= 24
-                                  ? 'Óptima'
-                                  : 'Regular',
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildIoTCard(
-                              'CO2',
-                              '${_getCO2Level()} ppm',
-                              Icons.air,
-                              _getCO2Level() < 1000 ? Colors.green : Colors.red,
-                              _getCO2Level() < 1000 ? 'Normal' : 'Alto',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildIoTCard(
-                              'Humedad',
-                              '${_getHumidity()}%',
-                              Icons.opacity,
-                              _getHumidity() >= 40 && _getHumidity() <= 70
-                                  ? Colors.blue
-                                  : Colors.orange,
-                              _getHumidity() >= 40 && _getHumidity() <= 70
-                                  ? 'Ideal'
-                                  : 'Regular',
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildIoTCard(
-                              'Limpieza',
-                              '${_getDaysToClean()} días',
-                              Icons.cleaning_services,
-                              _getDaysToClean() > 2 ? Colors.green : Colors.red,
-                              _getDaysToClean() > 2 ? 'Programada' : 'Urgente',
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildIoTCard(
-                              'Última limpieza',
-                              _getLastCleaningDate(),
-                              Icons.history,
-                              _getDaysToClean() > 2
-                                  ? Colors.grey
-                                  : Colors.orange,
-                              _getDaysToClean() > 2
-                                  ? 'Reciente'
-                                  : 'Hace tiempo',
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Estado de dispositivos IoT
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2196F3).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(0xFF2196F3).withOpacity(0.3),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.device_hub,
-                                  color: Color(0xFF2196F3),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Estado de Dispositivos',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2196F3),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            _buildDeviceStatusGrid(),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 16), // Horarios de comida
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF9800).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(0xFFFF9800).withOpacity(0.3),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.schedule,
-                                  color: Color(0xFFFF9800),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                const Expanded(
-                                  child: Text(
-                                    'Horarios de Alimentación',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFF9800),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF8B4513)
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.home_work,
+                                        color: Color(0xFF8B4513),
+                                        size: 32,
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            widget.jaula.nombre,
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF8B4513),
+                                            ),
+                                          ),
+                                          Text(
+                                            widget.jaula.descripcion,
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 16),
+                                FutureBuilder<List<animal_svc.AnimalModel>>(
+                                  future: _animalsFuture,
+                                  builder: (context, snapshot) {
+                                    final cantidadCuyes =
+                                        snapshot.data?.length ?? 0;
+                                    // Fix division by zero: check if capacidadMaxima > 0
+                                    final porcentajeOcupacion =
+                                        widget.jaula.capacidadMaxima > 0
+                                            ? (cantidadCuyes /
+                                                    widget
+                                                        .jaula.capacidadMaxima *
+                                                    100)
+                                                .round()
+                                            : 0;
+
+                                    return Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildStatCard(
+                                            'Cuyes',
+                                            '$cantidadCuyes/${widget.jaula.capacidadMaxima}',
+                                            Icons.pets,
+                                            porcentajeOcupacion > 80
+                                                ? Colors.red
+                                                : Colors.green,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: _buildStatCard(
+                                            'Ocupación',
+                                            '$porcentajeOcupacion%',
+                                            Icons.analytics,
+                                            porcentajeOcupacion > 80
+                                                ? Colors.red
+                                                : Colors.blue,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: _buildStatCard(
+                                            'Creada',
+                                            _formatDate(
+                                                widget.jaula.fechaCreacion),
+                                            Icons.calendar_today,
+                                            Colors.orange,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Sección IoT
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF2196F3)
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.sensors,
+                                        color: Color(0xFF2196F3),
+                                        size: 24,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Monitoreo IoT',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF8B4513),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: _getJaulaStatus()['color'],
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _getJaulaStatus()['icon'],
+                                            size: 16,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _getJaulaStatus()['text'],
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Sensores principales con datos reales
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildIoTCard(
+                                        'Agua',
+                                        '${_getWaterLevel().toStringAsFixed(1)}ml',
+                                        Icons.water_drop,
+                                        _getWaterStatus()['color'],
+                                        _getWaterStatus()['status'],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildIoTCard(
+                                        'Temperatura',
+                                        '${_getTemperature().toStringAsFixed(1)}°C',
+                                        Icons.thermostat,
+                                        _getTemperatureStatus()['color'],
+                                        _getTemperatureStatus()['status'],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildIoTCard(
+                                        'CO2',
+                                        '${_getCO2Level().toStringAsFixed(0)} ppm',
+                                        Icons.air,
+                                        _getCO2Status()['color'],
+                                        _getCO2Status()['status'],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildIoTCard(
+                                        'Humedad',
+                                        '${_getHumidity().toStringAsFixed(1)}%',
+                                        Icons.opacity,
+                                        _getHumidityStatus()['color'],
+                                        _getHumidityStatus()['status'],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildIoTCard(
+                                        'Limpieza',
+                                        '${_getDaysToClean()} días',
+                                        Icons.cleaning_services,
+                                        _getDaysToClean() > 2
+                                            ? Colors.green
+                                            : Colors.red,
+                                        _getDaysToClean() > 2
+                                            ? 'Programada'
+                                            : 'Urgente',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _buildIoTCard(
+                                        'Última limpieza',
+                                        _getLastCleaningDate(),
+                                        Icons.history,
+                                        _getDaysToClean() > 2
+                                            ? Colors.grey
+                                            : Colors.orange,
+                                        _getDaysToClean() > 2
+                                            ? 'Reciente'
+                                            : 'Hace tiempo',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // Estado de dispositivos IoT
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFF9800),
+                                    color: const Color(0xFF2196F3)
+                                        .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    '${_getFeedingSchedules().length} comidas/día',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
+                                    border: Border.all(
+                                      color: const Color(0xFF2196F3)
+                                          .withOpacity(0.3),
                                     ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.device_hub,
+                                            color: Color(0xFF2196F3),
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Text(
+                                            'Estado de Dispositivos',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF2196F3),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildDeviceStatusGrid(),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(
+                                    height: 16), // Horarios de comida
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFF9800)
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: const Color(0xFFFF9800)
+                                          .withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.schedule,
+                                            color: Color(0xFFFF9800),
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Expanded(
+                                            child: Text(
+                                              'Horarios de Alimentación',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFFFF9800),
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFF9800),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              '${_getFeedingSchedules().length} comidas/día',
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildFeedingScheduleList(),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            _buildFeedingScheduleList(),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Header de cuyes
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Cuyes en esta jaula',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF8B4513),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => _navigateToAddCuy(),
+                              icon: const Icon(Icons.add, color: Colors.white),
+                              label: const Text('Agregar Cuy',
+                                  style: TextStyle(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF8B4513),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
+
+                      const SizedBox(height: 8),
+
+                      // Lista de cuyes
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        height: 400,
+                        child: FutureBuilder<List<animal_svc.AnimalModel>>(
+                          future: _animalsFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.error,
+                                        size: 64, color: Colors.red),
+                                    const SizedBox(height: 16),
+                                    Text('Error: ${snapshot.error}'),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton(
+                                      onPressed: _loadAnimals,
+                                      child: const Text('Reintentar'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } else if (!snapshot.hasData ||
+                                snapshot.data!.isEmpty) {
+                              return const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.pets,
+                                        size: 64, color: Colors.grey),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'No hay cuyes en esta jaula',
+                                      style: TextStyle(
+                                          fontSize: 18, color: Colors.grey),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Agrega el primer cuy para comenzar',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            final cuyes = snapshot.data!;
+                            return ListView.builder(
+                              itemCount: cuyes.length,
+                              itemBuilder: (context, index) {
+                                final cuy = cuyes[index];
+                                return _buildAnimalCard(cuy);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 80), // Espacio para FAB
                     ],
                   ),
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Header de cuyes
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Cuyes en esta jaula',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF8B4513),
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _navigateToAddCuy(),
-                    icon: const Icon(Icons.add, color: Colors.white),
-                    label: const Text('Agregar Cuy',
-                        style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B4513),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Lista de cuyes
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              height: 400,
-              child: FutureBuilder<List<CuyModel>>(
-                future: _cuyesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error, size: 64, color: Colors.red),
-                          const SizedBox(height: 16),
-                          Text('Error: ${snapshot.error}'),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _loadCuyes,
-                            child: const Text('Reintentar'),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.pets, size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            'No hay cuyes en esta jaula',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Agrega el primer cuy para comenzar',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final cuyes = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: cuyes.length,
-                    itemBuilder: (context, index) {
-                      final cuy = cuyes[index];
-                      return _buildCuyCard(cuy);
-                    },
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 80), // Espacio para FAB
-          ],
-        ),
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _navigateToAddCuy(),
         backgroundColor: const Color(0xFF8B4513),
@@ -648,8 +771,8 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
     );
   }
 
-  Widget _buildCuyCard(CuyModel cuy) {
-    Color estadoColor = _getEstadoColor(cuy.estado);
+  Widget _buildAnimalCard(animal_svc.AnimalModel animal) {
+    Color estadoColor = _getEstadoColor(animal.estado);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -657,17 +780,17 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _navigateToEditCuy(cuy),
+        onTap: () => _navigateToEditAnimal(animal),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Avatar del cuy
+              // Avatar del animal
               CircleAvatar(
                 radius: 24,
                 backgroundColor: estadoColor.withOpacity(0.2),
                 child: Icon(
-                  cuy.sexo == 'macho' ? Icons.male : Icons.female,
+                  animal.sexo == 'macho' ? Icons.male : Icons.female,
                   color: estadoColor,
                   size: 24,
                 ),
@@ -683,7 +806,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            cuy.nombre,
+                            animal.name,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -699,7 +822,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            cuy.estado.toUpperCase(),
+                            animal.estado.toUpperCase(),
                             style: TextStyle(
                               color: estadoColor,
                               fontSize: 10,
@@ -715,7 +838,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                         Icon(Icons.palette, size: 14, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
-                          cuy.color,
+                          animal.color,
                           style:
                               TextStyle(color: Colors.grey[600], fontSize: 12),
                         ),
@@ -724,7 +847,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                             size: 14, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
-                          '${cuy.peso} kg',
+                          '${animal.peso} kg',
                           style:
                               TextStyle(color: Colors.grey[600], fontSize: 12),
                         ),
@@ -732,7 +855,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Edad: ${cuy.edadFormateada}',
+                      'Edad: ${animal.edadFormateada}',
                       style: TextStyle(color: Colors.grey[500], fontSize: 11),
                     ),
                   ],
@@ -741,7 +864,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
 
               // Menú de acciones
               PopupMenuButton<String>(
-                onSelected: (value) => _handleCuyAction(value, cuy),
+                onSelected: (value) => _handleAnimalAction(value, animal),
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: 'view',
@@ -782,53 +905,117 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
     );
   }
 
-  // Métodos IoT para obtener datos simulados de sensores
+  // Métodos IoT para obtener datos reales de sensores
   Map<String, dynamic> _getJaulaStatus() {
-    final waterLevel = _getWaterLevel();
-    final temperature = _getTemperature();
-    final co2Level = _getCO2Level();
-    final daysToClean = _getDaysToClean();
-    final humidity = _getHumidity();
+    if (_latestSensorData == null || _currentRanges == null) {
+      return {
+        'color': Colors.grey,
+        'icon': Icons.sensors_off,
+        'text': 'Sin datos'
+      };
+    }
 
-    final isWaterOk = waterLevel > 500;
-    final isTempOk = temperature >= 18 && temperature <= 24;
-    final isCO2Ok = co2Level < 1000;
-    final isCleanOk = daysToClean > 2;
-    final isHumidityOk = humidity >= 40 && humidity <= 70;
+    final sensor = _latestSensorData!;
+    final range = _currentRanges!;
 
-    if (isWaterOk && isTempOk && isCO2Ok && isCleanOk && isHumidityOk) {
+    // Verificar si los valores están dentro de los rangos
+    final violations = _acceptableRangeService.getRangeViolations(
+      range: range,
+      temperature: sensor.temperature,
+      humidity: sensor.humidity,
+      co2: sensor.co2,
+      waterQuality: sensor.waterQuality,
+      waterQuantity: sensor.waterQuantity,
+    );
+
+    if (violations.isEmpty) {
       return {
         'color': Colors.green,
         'icon': Icons.check_circle,
         'text': 'Excelente'
       };
-    } else if (!isWaterOk || !isCO2Ok || !isCleanOk) {
-      return {'color': Colors.red, 'icon': Icons.warning, 'text': 'Crítico'};
-    } else {
+    } else if (violations.length <= 2) {
       return {'color': Colors.orange, 'icon': Icons.info, 'text': 'Regular'};
+    } else {
+      return {'color': Colors.red, 'icon': Icons.warning, 'text': 'Crítico'};
     }
   }
 
-  int _getWaterLevel() {
-    // Simulación de datos IoT basada en la jaula específica
-    final baseLevel = 600 + (widget.jaula.id * 50) % 400;
-    return baseLevel;
+  double _getWaterLevel() {
+    return _latestSensorData?.waterQuantity ?? 0.0;
   }
 
-  int _getTemperature() {
-    // Simulación de temperatura variable según la jaula
-    final baseTemp = 20 + (widget.jaula.id % 5);
-    return baseTemp;
+  double _getTemperature() {
+    return _latestSensorData?.temperature ?? 0.0;
   }
 
-  int _getCO2Level() {
-    // Simulación de CO2 basada en ocupación de la jaula (valor inmediato)
-    return 750 + (widget.jaula.id * 30) % 200;
+  double _getCO2Level() {
+    return _latestSensorData?.co2 ?? 0.0;
   }
 
-  int _getHumidity() {
-    // Simulación de humedad
-    return 55 + (widget.jaula.id % 10);
+  double _getHumidity() {
+    return _latestSensorData?.humidity ?? 0.0;
+  }
+
+  Map<String, dynamic> _getWaterStatus() {
+    final waterLevel = _getWaterLevel();
+    if (_currentRanges != null) {
+      final isInRange = _currentRanges!.isWaterQuantityInRange(waterLevel);
+      return {
+        'color': isInRange ? Colors.blue : Colors.red,
+        'status': isInRange ? 'Buen estado' : 'Fuera de rango'
+      };
+    }
+    return {
+      'color': waterLevel > 500 ? Colors.blue : Colors.red,
+      'status': waterLevel > 500 ? 'Buen estado' : 'Nivel bajo'
+    };
+  }
+
+  Map<String, dynamic> _getTemperatureStatus() {
+    final temperature = _getTemperature();
+    if (_currentRanges != null) {
+      final isInRange = _currentRanges!.isTemperatureInRange(temperature);
+      return {
+        'color': isInRange ? Colors.green : Colors.orange,
+        'status': isInRange ? 'Óptima' : 'Fuera de rango'
+      };
+    }
+    return {
+      'color':
+          temperature >= 18 && temperature <= 24 ? Colors.green : Colors.orange,
+      'status': temperature >= 18 && temperature <= 24 ? 'Óptima' : 'Regular'
+    };
+  }
+
+  Map<String, dynamic> _getCO2Status() {
+    final co2 = _getCO2Level();
+    if (_currentRanges != null) {
+      final isInRange = _currentRanges!.isCo2InRange(co2);
+      return {
+        'color': isInRange ? Colors.green : Colors.red,
+        'status': isInRange ? 'Normal' : 'Fuera de rango'
+      };
+    }
+    return {
+      'color': co2 < 1000 ? Colors.green : Colors.red,
+      'status': co2 < 1000 ? 'Normal' : 'Alto'
+    };
+  }
+
+  Map<String, dynamic> _getHumidityStatus() {
+    final humidity = _getHumidity();
+    if (_currentRanges != null) {
+      final isInRange = _currentRanges!.isHumidityInRange(humidity);
+      return {
+        'color': isInRange ? Colors.blue : Colors.orange,
+        'status': isInRange ? 'Ideal' : 'Fuera de rango'
+      };
+    }
+    return {
+      'color': humidity >= 40 && humidity <= 70 ? Colors.blue : Colors.orange,
+      'status': humidity >= 40 && humidity <= 70 ? 'Ideal' : 'Regular'
+    };
   }
 
   int _getDaysToClean() {
@@ -845,13 +1032,13 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
   }
 
   List<String> _getFeedingSchedules() {
-    // Horarios personalizados por jaula
-    final schedules = [
-      ['6:30 AM', '12:00 PM', '6:30 PM'],
-      ['7:00 AM', '1:00 PM', '7:00 PM'],
-      ['6:00 AM', '11:30 AM', '5:30 PM'],
-    ];
-    return schedules[widget.jaula.id % schedules.length];
+    if (_feedingSchedules.isEmpty) {
+      return ['Sin horarios configurados'];
+    }
+
+    return _feedingSchedules.map((schedule) {
+      return '${schedule.morningTime} - ${schedule.eveningTime}';
+    }).toList();
   }
 
   Map<String, dynamic> _getDeviceStatus() {
@@ -896,68 +1083,59 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
           role: widget.role,
         ),
       ),
-    ).then((_) => _loadCuyes());
+    ).then((_) => _loadAnimals());
   }
 
-  void _navigateToEditCuy(CuyModel cuy) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CuyFormScreen(
-          cuy: cuy,
-          jaulaId: widget.jaula.id,
-          userId: widget.userId,
-          fullname: widget.fullname,
-          username: widget.username,
-          photoUrl: widget.photoUrl,
-          role: widget.role,
-        ),
-      ),
-    ).then((_) => _loadCuyes());
+  void _navigateToEditAnimal(animal_svc.AnimalModel animal) {
+    // TODO: Implement animal editing
+    // For now, show details dialog
+    _showAnimalDetailsDialog(animal);
   }
 
-  void _handleCuyAction(String action, CuyModel cuy) {
+  void _handleAnimalAction(String action, animal_svc.AnimalModel animal) {
     switch (action) {
       case 'view':
-        _showCuyDetailsDialog(cuy);
+        _showAnimalDetailsDialog(animal);
         break;
       case 'edit':
-        _navigateToEditCuy(cuy);
+        _navigateToEditAnimal(animal);
         break;
       case 'delete':
-        _showDeleteCuyDialog(cuy);
+        _showDeleteAnimalDialog(animal);
         break;
     }
   }
 
-  void _showCuyDetailsDialog(CuyModel cuy) {
+  void _showAnimalDetailsDialog(animal_svc.AnimalModel animal) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
             Icon(
-              cuy.sexo == 'macho' ? Icons.male : Icons.female,
-              color: _getEstadoColor(cuy.estado),
+              animal.sexo == 'macho' ? Icons.male : Icons.female,
+              color: _getEstadoColor(animal.estado),
             ),
             const SizedBox(width: 8),
-            Text(cuy.nombre),
+            Text(animal.name),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('Sexo', cuy.sexo),
-            _buildDetailRow('Color', cuy.color),
-            _buildDetailRow('Peso', '${cuy.peso} kg'),
-            _buildDetailRow('Estado', cuy.estado),
-            _buildDetailRow('Edad', cuy.edadFormateada),
+            _buildDetailRow('Sexo', animal.sexo),
+            _buildDetailRow('Raza', animal.color),
+            _buildDetailRow('Peso', '${animal.peso} kg'),
+            _buildDetailRow('Estado', animal.estado),
+            _buildDetailRow('Edad', animal.edadFormateada),
             _buildDetailRow(
-                'Fecha de nacimiento', _formatDate(cuy.fechaNacimiento)),
-            _buildDetailRow('Fecha de ingreso', _formatDate(cuy.fechaIngreso)),
-            if (cuy.observaciones != null && cuy.observaciones!.isNotEmpty)
-              _buildDetailRow('Observaciones', cuy.observaciones!),
+                'Fecha de nacimiento', _formatDate(animal.fechaNacimiento)),
+            _buildDetailRow(
+                'Fecha de ingreso', _formatDate(animal.fechaIngreso)),
+            if (animal.observaciones != null &&
+                animal.observaciones!.isNotEmpty)
+              _buildDetailRow('Observaciones', animal.observaciones!),
           ],
         ),
         actions: [
@@ -968,6 +1146,55 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
         ],
       ),
     );
+  }
+
+  void _showDeleteAnimalDialog(animal_svc.AnimalModel animal) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar eliminación'),
+        content: Text(
+            '¿Estás seguro de que quieres eliminar al animal "${animal.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteAnimal(animal);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteAnimal(animal_svc.AnimalModel animal) async {
+    try {
+      await _animalService.deleteAnimal(animal.id);
+      _loadAnimals();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Animal "${animal.name}" eliminado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar el animal: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -989,55 +1216,6 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
         ],
       ),
     );
-  }
-
-  void _showDeleteCuyDialog(CuyModel cuy) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar eliminación'),
-        content: Text(
-            '¿Estás seguro de que quieres eliminar al cuy "${cuy.nombre}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteCuy(cuy);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _deleteCuy(CuyModel cuy) async {
-    try {
-      await _repository.deleteCuy(cuy.id);
-      _loadCuyes();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Cuy "${cuy.nombre}" eliminado exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al eliminar el cuy: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   Widget _buildDeviceStatusGrid() {
@@ -1105,14 +1283,29 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
 
   Widget _buildFeedingScheduleList() {
     final schedules = _getFeedingSchedules();
-    final mealNames = ['Desayuno', 'Almuerzo', 'Cena'];
+
+    if (schedules.length == 1 && schedules[0] == 'Sin horarios configurados') {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: const Text(
+          'No hay horarios de alimentación configurados para esta jaula.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+            fontStyle: FontStyle.italic,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
 
     return Column(
       children: schedules.asMap().entries.map((entry) {
         final index = entry.key;
-        final time = entry.value;
-        final mealName =
-            index < mealNames.length ? mealNames[index] : 'Comida ${index + 1}';
+        final timeRange = entry.value;
+        final times = timeRange.split(' - ');
+        final morningTime = times.isNotEmpty ? times[0] : '';
+        final eveningTime = times.length > 1 ? times[1] : '';
 
         return Container(
           margin: const EdgeInsets.only(bottom: 6),
@@ -1133,7 +1326,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Icon(
-                  _getMealIcon(index),
+                  Icons.schedule,
                   size: 16,
                   color: const Color(0xFFFF9800),
                 ),
@@ -1144,7 +1337,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      mealName,
+                      'Horario ${index + 1}',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -1152,7 +1345,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                       ),
                     ),
                     Text(
-                      'Programado',
+                      'Mañana: $morningTime | Tarde: $eveningTime',
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey[600],
@@ -1162,15 +1355,15 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF9800),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  time,
-                  style: const TextStyle(
-                    fontSize: 12,
+                child: const Text(
+                  'Activo',
+                  style: TextStyle(
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -1181,18 +1374,5 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
         );
       }).toList(),
     );
-  }
-
-  IconData _getMealIcon(int index) {
-    switch (index) {
-      case 0:
-        return Icons.wb_sunny; // Desayuno
-      case 1:
-        return Icons.wb_cloudy; // Almuerzo
-      case 2:
-        return Icons.nights_stay; // Cena
-      default:
-        return Icons.restaurant;
-    }
   }
 }

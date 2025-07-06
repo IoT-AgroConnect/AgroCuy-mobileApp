@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar_menu.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
+import 'package:agrocuy/infrastructure/services/cage_service.dart';
+import 'package:agrocuy/infrastructure/services/session_service.dart';
 import '../data/models/jaula_model.dart';
-import '../data/repositories/animals_repository.dart';
 
 class JaulaFormScreen extends StatefulWidget {
   final JaulaModel? jaula; // null para crear, con datos para editar
@@ -32,12 +33,16 @@ class _JaulaFormScreenState extends State<JaulaFormScreen> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _capacidadController = TextEditingController();
-  final AnimalsRepository _repository = AnimalsRepository();
+  late final CageService _cageService;
+  late final SessionService _sessionService;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _cageService = CageService();
+    _sessionService = SessionService();
+
     if (widget.jaula != null) {
       _nombreController.text = widget.jaula!.nombre;
       _descripcionController.text = widget.jaula!.descripcion;
@@ -317,18 +322,39 @@ class _JaulaFormScreenState extends State<JaulaFormScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final jaula = JaulaModel(
-        id: widget.jaula?.id ?? 0, // El repository asignará el ID real
-        nombre: _nombreController.text.trim(),
-        descripcion: _descripcionController.text.trim(),
-        capacidadMaxima: int.parse(_capacidadController.text.trim()),
-        fechaCreacion: widget.jaula?.fechaCreacion ?? DateTime.now(),
-      );
+      print('DEBUG: Initializing session...');
+      // Ensure session is initialized
+      await _sessionService.init();
+
+      print('DEBUG: Checking authentication...');
+      final isAuth = await _cageService.isAuthenticated();
+      print('DEBUG: isAuthenticated: $isAuth');
+
+      if (!isAuth) {
+        throw Exception(
+            'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+      }
 
       if (widget.jaula != null) {
-        await _repository.updateJaula(jaula);
+        print('DEBUG: Updating existing cage...');
+        // Update existing cage
+        final updateRequest = UpdateCageRequest(
+          name: _nombreController.text.trim(),
+          observations: _descripcionController.text.trim(),
+          size: int.parse(_capacidadController.text.trim()),
+        );
+        await _cageService.updateCage(widget.jaula!.id, updateRequest);
       } else {
-        await _repository.createJaula(jaula);
+        print('DEBUG: Creating new cage...');
+        // Create new cage
+        final createRequest = CreateCageRequest(
+          name: _nombreController.text.trim(),
+          observations: _descripcionController.text.trim(),
+          size: int.parse(_capacidadController.text.trim()),
+          breederId: widget.userId, // Use current user as breeder
+        );
+        print('DEBUG: CreateRequest: ${createRequest.toJson()}');
+        await _cageService.createCage(createRequest);
       }
 
       if (mounted) {
@@ -345,6 +371,7 @@ class _JaulaFormScreenState extends State<JaulaFormScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
+      print('DEBUG: Error in _saveJaula: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

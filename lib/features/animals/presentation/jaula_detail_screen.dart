@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar_menu.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
+import 'package:agrocuy/infrastructure/services/animal_service.dart'
+    as animal_svc;
+import 'package:agrocuy/infrastructure/services/session_service.dart';
 import '../data/models/jaula_model.dart';
 import '../data/models/cuy_model.dart';
-import '../data/repositories/animals_repository.dart';
 import 'cuy_form_screen.dart';
 
 class JaulaDetailScreen extends StatefulWidget {
@@ -30,19 +32,38 @@ class JaulaDetailScreen extends StatefulWidget {
 }
 
 class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
-  final AnimalsRepository _repository = AnimalsRepository();
-  late Future<List<CuyModel>> _cuyesFuture;
+  late final animal_svc.AnimalService _animalService;
+  late final SessionService _sessionService;
+  late Future<List<animal_svc.AnimalModel>> _animalsFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadCuyes();
+    _animalService = animal_svc.AnimalService();
+    _sessionService = SessionService();
+    _loadAnimals();
   }
 
-  void _loadCuyes() {
-    setState(() {
-      _cuyesFuture = _repository.getCuyesByJaulaId(widget.jaula.id);
-    });
+  Future<void> _loadAnimals() async {
+    try {
+      // Ensure session is initialized
+      await _sessionService.init();
+
+      if (!_animalService.isAuthenticated()) {
+        throw Exception(
+            'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+      }
+
+      setState(() {
+        _animalsFuture =
+            _animalService.getAnimalsByCageIdWithRetry(widget.jaula.id);
+      });
+    } catch (e) {
+      // Error handling can be done in the FutureBuilder
+      setState(() {
+        _animalsFuture = Future.error(e);
+      });
+    }
   }
 
   @override
@@ -163,8 +184,8 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      FutureBuilder<List<CuyModel>>(
-                        future: _cuyesFuture,
+                      FutureBuilder<List<animal_svc.AnimalModel>>(
+                        future: _animalsFuture,
                         builder: (context, snapshot) {
                           final cantidadCuyes = snapshot.data?.length ?? 0;
                           final porcentajeOcupacion = (cantidadCuyes /
@@ -443,8 +464,8 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               height: 400,
-              child: FutureBuilder<List<CuyModel>>(
-                future: _cuyesFuture,
+              child: FutureBuilder<List<animal_svc.AnimalModel>>(
+                future: _animalsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -458,7 +479,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                           Text('Error: ${snapshot.error}'),
                           const SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: _loadCuyes,
+                            onPressed: _loadAnimals,
                             child: const Text('Reintentar'),
                           ),
                         ],
@@ -587,8 +608,8 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
     );
   }
 
-  Widget _buildCuyCard(CuyModel cuy) {
-    Color estadoColor = _getEstadoColor(cuy.estado);
+  Widget _buildCuyCard(animal_svc.AnimalModel animal) {
+    Color estadoColor = _getEstadoColor(animal.estado);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -596,7 +617,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _navigateToEditCuy(cuy),
+        onTap: () => _navigateToEditCuy(_animalToCuyModel(animal)),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -606,7 +627,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                 radius: 24,
                 backgroundColor: estadoColor.withOpacity(0.2),
                 child: Icon(
-                  cuy.sexo == 'macho' ? Icons.male : Icons.female,
+                  animal.sexo == 'macho' ? Icons.male : Icons.female,
                   color: estadoColor,
                   size: 24,
                 ),
@@ -622,7 +643,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            cuy.nombre,
+                            animal.name,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -638,7 +659,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            cuy.estado.toUpperCase(),
+                            animal.estado.toUpperCase(),
                             style: TextStyle(
                               color: estadoColor,
                               fontSize: 10,
@@ -654,7 +675,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                         Icon(Icons.palette, size: 14, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
-                          cuy.color,
+                          animal.color,
                           style:
                               TextStyle(color: Colors.grey[600], fontSize: 12),
                         ),
@@ -663,7 +684,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                             size: 14, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
-                          '${cuy.peso} kg',
+                          '${animal.peso} kg',
                           style:
                               TextStyle(color: Colors.grey[600], fontSize: 12),
                         ),
@@ -671,7 +692,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Edad: ${cuy.edadFormateada}',
+                      'Edad: ${animal.edadFormateada}',
                       style: TextStyle(color: Colors.grey[500], fontSize: 11),
                     ),
                   ],
@@ -680,7 +701,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
 
               // Menú de acciones
               PopupMenuButton<String>(
-                onSelected: (value) => _handleCuyAction(value, cuy),
+                onSelected: (value) => _handleCuyAction(value, animal),
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: 'view',
@@ -801,7 +822,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
           role: widget.role,
         ),
       ),
-    ).then((_) => _loadCuyes());
+    ).then((_) => _loadAnimals());
   }
 
   void _navigateToEditCuy(CuyModel cuy) {
@@ -818,10 +839,27 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
           role: widget.role,
         ),
       ),
-    ).then((_) => _loadCuyes());
+    ).then((_) => _loadAnimals());
   }
 
-  void _handleCuyAction(String action, CuyModel cuy) {
+  // Convertir AnimalModel a CuyModel para compatibilidad
+  CuyModel _animalToCuyModel(animal_svc.AnimalModel animal) {
+    return CuyModel(
+      id: animal.id,
+      nombre: animal.name,
+      sexo: animal.sexo,
+      fechaNacimiento: animal.fechaNacimiento,
+      peso: animal.peso,
+      color: animal.color,
+      estado: animal.estado,
+      jaulaId: animal.cageId,
+      fechaIngreso: animal.fechaIngreso,
+      observaciones: animal.observaciones,
+    );
+  }
+
+  void _handleCuyAction(String action, animal_svc.AnimalModel animal) {
+    final cuy = _animalToCuyModel(animal);
     switch (action) {
       case 'view':
         _showCuyDetailsDialog(cuy);
@@ -923,8 +961,16 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
 
   void _deleteCuy(CuyModel cuy) async {
     try {
-      await _repository.deleteCuy(cuy.id);
-      _loadCuyes();
+      // Ensure session is initialized
+      await _sessionService.init();
+
+      if (!_animalService.isAuthenticated()) {
+        throw Exception(
+            'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+      }
+
+      await _animalService.deleteAnimal(cuy.id);
+      _loadAnimals();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

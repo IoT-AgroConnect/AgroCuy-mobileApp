@@ -37,20 +37,37 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     try {
+      // Initialize SessionService first
+      await SessionService().init();
+      print('DEBUG LOGIN: SessionService initialized');
+
       final loginData = await _authRepository.login(email, password);
+      print('DEBUG LOGIN: Login successful, data: $loginData');
 
       // Tomar el token y el userId del loginData
       final token = loginData['token'];
       final userId = loginData['id'];
+      print('DEBUG LOGIN: Token received: ${token.substring(0, 50)}...');
+      print('DEBUG LOGIN: User ID: $userId');
+
       await SessionService().setToken(token);
+      print('DEBUG LOGIN: Token saved to session');
 
       final userData = await _authRepository.getUserData(userId);
       final role = (userData['roles'] as List).first;
+      print('DEBUG LOGIN: User role: $role');
 
       // Guardar datos de sesión en SharedPreferences
-      await SessionService().setToken(token);
       await SessionService().setUserId(userId);
       await SessionService().setRole(role);
+      print('DEBUG LOGIN: Session data saved completely');
+
+      // Verify token was saved correctly
+      final savedToken = SessionService().getToken();
+      print(
+          'DEBUG LOGIN: Verification - saved token length: ${savedToken.length}');
+      print('DEBUG LOGIN: Verification - tokens match: ${token == savedToken}');
+
       // Guardar datos de sesión en SharedPreferences
 
       final profileData = await _authRepository.getProfileByRole(role);
@@ -93,7 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       print("Login error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Credenciales inválidas o error de conexión')),
+        const SnackBar(
+            content: Text('Credenciales inválidas o error de conexión')),
       );
     }
   }
@@ -142,7 +160,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: const Color(0xFF7A4E3A),
                       ),
                       onPressed: () {
@@ -184,7 +204,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const RegisterScreen()),
                     );
                   },
                   child: const Text(

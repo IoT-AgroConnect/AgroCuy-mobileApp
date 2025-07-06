@@ -14,7 +14,7 @@ class NotificationCard extends StatelessWidget {
   }) : super(key: key);
 
   void _openMeetLink(BuildContext context) async {
-    final url = notification.linkMeet;
+    final url = notification.meetingUrl;
     if (url == null || url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No hay enlace de Meet disponible')),
@@ -33,7 +33,8 @@ class NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateFormatted = DateFormat('dd/MM/yyyy – HH:mm').format(notification.date);
+    final dateFormatted =
+        DateFormat('dd/MM/yyyy – HH:mm').format(notification.date);
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

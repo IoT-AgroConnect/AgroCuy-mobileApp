@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar_menu.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
+import 'package:agrocuy/infrastructure/services/animal_service.dart'
+    as animal_svc;
+import 'package:agrocuy/infrastructure/services/session_service.dart';
 import '../data/models/cuy_model.dart';
-import '../data/repositories/animals_repository.dart';
 
 class CuyFormScreen extends StatefulWidget {
   final CuyModel? cuy; // null para crear, con datos para editar
@@ -33,41 +35,36 @@ class _CuyFormScreenState extends State<CuyFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
   final _pesoController = TextEditingController();
-  final _colorController = TextEditingController();
   final _observacionesController = TextEditingController();
-  final AnimalsRepository _repository = AnimalsRepository();
+  late final animal_svc.AnimalService _animalService;
+  late final SessionService _sessionService;
 
   String _sexoSeleccionado = 'macho';
   String _estadoSeleccionado = 'sano';
+  animal_svc.Breed _breedSeleccionada = animal_svc.Breed.ANDINA;
   DateTime _fechaNacimiento = DateTime.now().subtract(const Duration(days: 30));
   DateTime _fechaIngreso = DateTime.now();
   bool _isLoading = false;
 
   final List<String> _sexos = ['macho', 'hembra'];
   final List<String> _estados = ['sano', 'enfermo', 'reproduccion'];
-  final List<String> _coloresComunes = [
-    'blanco',
-    'negro',
-    'marron',
-    'gris',
-    'tricolor',
-    'blanco y negro',
-    'marron y blanco',
-    'otro'
-  ];
 
   @override
   void initState() {
     super.initState();
+    _animalService = animal_svc.AnimalService();
+    _sessionService = SessionService();
+
     if (widget.cuy != null) {
       _nombreController.text = widget.cuy!.nombre;
       _pesoController.text = widget.cuy!.peso.toString();
-      _colorController.text = widget.cuy!.color;
       _observacionesController.text = widget.cuy!.observaciones ?? '';
       _sexoSeleccionado = widget.cuy!.sexo;
       _estadoSeleccionado = widget.cuy!.estado;
       _fechaNacimiento = widget.cuy!.fechaNacimiento;
       _fechaIngreso = widget.cuy!.fechaIngreso;
+      // Map color to breed - this is temporary for legacy data
+      _breedSeleccionada = animal_svc.Breed.fromString(widget.cuy!.color);
     }
   }
 
@@ -75,7 +72,6 @@ class _CuyFormScreenState extends State<CuyFormScreen> {
   void dispose() {
     _nombreController.dispose();
     _pesoController.dispose();
-    _colorController.dispose();
     _observacionesController.dispose();
     super.dispose();
   }
@@ -310,51 +306,32 @@ class _CuyFormScreenState extends State<CuyFormScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Color
-                      DropdownButtonFormField<String>(
-                        value: _coloresComunes.contains(_colorController.text)
-                            ? _colorController.text
-                            : 'otro',
+                      // Raza/Breed
+                      DropdownButtonFormField<animal_svc.Breed>(
+                        value: _breedSeleccionada,
                         decoration: const InputDecoration(
-                          labelText: 'Color',
-                          prefixIcon: Icon(Icons.color_lens),
+                          labelText: 'Raza',
+                          prefixIcon: Icon(Icons.pets),
                           border: OutlineInputBorder(),
                         ),
-                        items: _coloresComunes.map((color) {
+                        items: animal_svc.Breed.values.map((breed) {
                           return DropdownMenuItem(
-                            value: color,
-                            child: Text(color.toUpperCase()),
+                            value: breed,
+                            child: Text(breed.displayName),
                           );
                         }).toList(),
                         onChanged: (value) {
-                          if (value == 'otro') {
-                            _colorController.clear();
-                          } else {
-                            _colorController.text = value!;
+                          setState(() {
+                            _breedSeleccionada = value!;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'La raza es obligatoria';
                           }
+                          return null;
                         },
                       ),
-
-                      // Campo de texto para color personalizado
-                      if (!_coloresComunes.contains(_colorController.text) ||
-                          _colorController.text.isEmpty) ...[
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _colorController,
-                          decoration: const InputDecoration(
-                            labelText: 'Color personalizado',
-                            hintText: 'Describe el color del cuy',
-                            prefixIcon: Icon(Icons.brush),
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'El color es obligatorio';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
 
                       const SizedBox(height: 16),
 
@@ -609,19 +586,42 @@ class _CuyFormScreenState extends State<CuyFormScreen> {
     }
   }
 
+  // Convertir CuyModel a AnimalModel
+  animal_svc.AnimalModel _cuyToAnimalModel(CuyModel cuy) {
+    return animal_svc.AnimalModel(
+      id: cuy.id,
+      name: cuy.nombre,
+      breed: animal_svc.Breed.fromString(cuy.color), // Convert color string to breed
+      gender: cuy.sexo == 'macho', // true = macho, false = hembra
+      birthdate: cuy.fechaNacimiento,
+      weight: cuy.peso,
+      isSick: cuy.estado == 'enfermo',
+      observations: cuy.observaciones,
+      cageId: cuy.jaulaId,
+    );
+  }
+
   void _saveCuy() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
+      // Ensure session is initialized
+      await _sessionService.init();
+
+      if (!_animalService.isAuthenticated()) {
+        throw Exception(
+            'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+      }
+
       final cuy = CuyModel(
-        id: widget.cuy?.id ?? 0, // El repository asignará el ID real
+        id: widget.cuy?.id ?? 0, // El servicio asignará el ID real
         nombre: _nombreController.text.trim(),
         sexo: _sexoSeleccionado,
         fechaNacimiento: _fechaNacimiento,
         peso: double.parse(_pesoController.text.trim()),
-        color: _colorController.text.trim(),
+        color: _breedSeleccionada.displayName, // Use breed display name as color
         estado: _estadoSeleccionado,
         jaulaId: widget.jaulaId,
         fechaIngreso: _fechaIngreso,
@@ -630,10 +630,12 @@ class _CuyFormScreenState extends State<CuyFormScreen> {
             : _observacionesController.text.trim(),
       );
 
+      final animalModel = _cuyToAnimalModel(cuy);
+
       if (widget.cuy != null) {
-        await _repository.updateCuy(cuy);
+        await _animalService.updateAnimal(widget.cuy!.id, animalModel);
       } else {
-        await _repository.createCuy(cuy);
+        await _animalService.createAnimal(animalModel);
       }
 
       if (mounted) {

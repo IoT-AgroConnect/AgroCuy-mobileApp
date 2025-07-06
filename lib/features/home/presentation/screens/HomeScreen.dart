@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar_menu.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_advisor.dart';
+import 'package:agrocuy/infrastructure/services/publication_service.dart';
+import 'package:agrocuy/infrastructure/services/session_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final int userId;
   final String fullname;
   final String username;
   final String photoUrl;
-  final String role; // NUEVO
+  final String role;
 
   const HomeScreen({
     super.key,
@@ -19,22 +21,105 @@ class HomeScreen extends StatelessWidget {
     required this.role,
     required breederId,
   });
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Publication> publications = [];
+  bool isLoading = true;
+  String? errorMessage;
+  final PublicationService _publicationService = PublicationService();
+  final SessionService _sessionService = SessionService();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAndLoadData();
+  }
+
+  Future<void> _initializeAndLoadData() async {
+    try {
+      // Asegurar que SessionService esté inicializado
+      await _sessionService.init();
+      await _loadPublications();
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error al inicializar la aplicación: $e';
+        isLoading = false;
+      });
+      print('Error initializing: $e');
+    }
+  }
+
+  Future<void> _loadPublications() async {
+    try {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
+      // Verificar si el usuario está autenticado
+      if (!_publicationService.isAuthenticated()) {
+        setState(() {
+          errorMessage =
+              'No hay token de autenticación. Por favor, inicia sesión nuevamente.';
+          isLoading = false;
+        });
+        return;
+      }
+
+      // Debug: mostrar el token actual (opcional, solo para desarrollo)
+      final currentToken = _publicationService.getCurrentToken();
+      print('Current token: ${currentToken.substring(0, 20)}...');
+
+      final loadedPublications =
+          await _publicationService.getPublicationsWithRetry();
+
+      setState(() {
+        publications = loadedPublications;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        // Verificar si es un error de autenticación
+        if (e.toString().contains('401')) {
+          errorMessage =
+              'Error de autenticación. El token ha expirado o es inválido.';
+        } else if (e.toString().contains('403')) {
+          errorMessage = 'No tienes permisos para ver las publicaciones.';
+        } else if (e.toString().contains('500')) {
+          errorMessage = 'Error del servidor. Intenta más tarde.';
+        } else if (e.toString().contains('Connection') ||
+            e.toString().contains('SocketException')) {
+          errorMessage =
+              'Error de conexión. Verifica tu internet y que el servidor esté disponible.';
+        } else {
+          errorMessage = 'Error: ${e.toString().replaceAll('Exception: ', '')}';
+        }
+        isLoading = false;
+      });
+      print('Error loading publications: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFE3B3),
       appBar: const appBarMenu(title: 'AgroCuy'),
-      drawer: role == 'ROLE_BREEDER'
+      drawer: widget.role == 'ROLE_BREEDER'
           ? UserDrawerBreeder(
-              fullname: fullname,
-              username: username.split('@').first,
-              photoUrl: photoUrl,
+              fullname: widget.fullname,
+              username: widget.username.split('@').first,
+              photoUrl: widget.photoUrl,
             )
           : UserDrawerAdvisor(
-              fullname: fullname,
-              username: username.split('@').first,
-              photoUrl: photoUrl,
-              advisorId: userId),
+              fullname: widget.fullname,
+              username: widget.username.split('@').first,
+              photoUrl: widget.photoUrl,
+              advisorId: widget.userId),
       body: CustomScrollView(
         slivers: [
           // Header de bienvenida
@@ -64,7 +149,7 @@ class HomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '¡Hola, ${fullname.split(' ').first}!',
+                          '¡Hola, ${widget.fullname.split(' ').first}!',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -73,7 +158,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          role == 'ROLE_BREEDER'
+                          widget.role == 'ROLE_BREEDER'
                               ? 'Gestiona tu granja de cuyes'
                               : 'Brinda asesoría especializada',
                           style: TextStyle(
@@ -100,7 +185,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                     child: ClipOval(
                       child: Image.network(
-                        photoUrl,
+                        widget.photoUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
@@ -214,90 +299,140 @@ class HomeScreen extends StatelessWidget {
           // Grid de contenido
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.8,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final publications = [
-                    {
-                      'id': 1,
-                      'title': 'Cuidados básicos del cuy',
-                      'description':
-                          'Aprende los cuidados esenciales para mantener a tus cuyes saludables y felices. Incluye tips de alimentación, higiene y manejo.',
-                      'imageUrl':
-                          'https://images.unsplash.com/photo-1589952283406-b53173a8ab6d?w=400',
-                      'author': 'Claudia23',
-                      'date': '2025-06-15',
-                      'category': 'Tips'
-                    },
-                    {
-                      'id': 2,
-                      'title': 'Receta nutritiva para cuyes',
-                      'description':
-                          'Deliciosa receta balanceada que aporta todos los nutrientes necesarios para el crecimiento óptimo de tus cuyes.',
-                      'imageUrl':
-                          'https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=400',
-                      'author': 'Tilin001',
-                      'date': '2025-06-14',
-                      'category': 'Receta'
-                    },
-                    {
-                      'id': 3,
-                      'title': 'Técnicas de reproducción',
-                      'description':
-                          'Guía completa sobre las mejores prácticas para la reproducción exitosa de cuyes en tu granja.',
-                      'imageUrl':
-                          'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400',
-                      'author': 'EstebanQuito',
-                      'date': '2025-06-13',
-                      'category': 'Tips'
-                    },
-                    {
-                      'id': 4,
-                      'title': 'Alimentación balanceada',
-                      'description':
-                          'Conoce los alimentos ideales y las proporciones correctas para una dieta equilibrada de tus cuyes.',
-                      'imageUrl':
-                          'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400',
-                      'author': 'ElCarlitosTV',
-                      'date': '2025-06-12',
-                      'category': 'Nutrición'
-                    },
-                    {
-                      'id': 5,
-                      'title': 'Prevención de enfermedades',
-                      'description':
-                          'Medidas preventivas esenciales para evitar las enfermedades más comunes en la crianza de cuyes.',
-                      'imageUrl':
-                          'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400',
-                      'author': 'ElzaPayo',
-                      'date': '2025-06-11',
-                      'category': 'Salud'
-                    },
-                    {
-                      'id': 6,
-                      'title': 'Manejo del galpón',
-                      'description':
-                          'Consejos para optimizar el espacio y las condiciones de tu galpón para el bienestar de los cuyes.',
-                      'imageUrl':
-                          'https://images.unsplash.com/photo-1504595403659-9088ce801e29?w=400',
-                      'author': 'TaniaCavia',
-                      'date': '2025-06-10',
-                      'category': 'Tips'
-                    },
-                  ];
-                  final publication = publications[index];
-
-                  return _buildPublicationCard(context, publication);
-                },
-                childCount: 6,
-              ),
-            ),
+            sliver: isLoading
+                ? const SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40.0),
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF8B4513),
+                        ),
+                      ),
+                    ),
+                  )
+                : errorMessage != null
+                    ? SliverToBoxAdapter(
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          margin: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border:
+                                Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: Colors.red[700],
+                                size: 48,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Error al cargar publicaciones',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red[700],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.red[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: _loadPublications,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Reintentar'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red[700],
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : publications.isEmpty
+                        ? SliverToBoxAdapter(
+                            child: Container(
+                              padding: const EdgeInsets.all(40),
+                              margin: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color:
+                                    const Color(0xFF8B4513).withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color:
+                                      const Color(0xFF8B4513).withOpacity(0.2),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.article_outlined,
+                                    size: 64,
+                                    color: const Color(0xFF8B4513)
+                                        .withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Aún no hay publicaciones',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF8B4513)
+                                          .withOpacity(0.8),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Las publicaciones de los asesores aparecerán aquí',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: const Color(0xFF8B4513)
+                                          .withOpacity(0.6),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton.icon(
+                                    onPressed: _loadPublications,
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text('Actualizar'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF8B4513),
+                                      foregroundColor: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : SliverGrid(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 16,
+                              crossAxisSpacing: 16,
+                              childAspectRatio: 0.8,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final publication = publications[index];
+                                return _buildPublicationCard(
+                                    context, publication);
+                              },
+                              childCount: publications.length,
+                            ),
+                          ),
           ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 20)),
@@ -355,8 +490,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPublicationCard(
-      BuildContext context, Map<String, dynamic> publication) {
+  Widget _buildPublicationCard(BuildContext context, Publication publication) {
     return GestureDetector(
       onTap: () => _showPublicationDetail(context, publication),
       child: Container(
@@ -373,7 +507,8 @@ class HomeScreen extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [            // Imagen de la publicación
+          children: [
+            // Imagen de la publicación
             Expanded(
               flex: 5,
               child: Container(
@@ -389,7 +524,9 @@ class HomeScreen extends StatelessWidget {
                     topRight: Radius.circular(16),
                   ),
                   child: Image.network(
-                    publication['imageUrl'],
+                    publication.image.isNotEmpty
+                        ? publication.image
+                        : 'https://images.unsplash.com/photo-1589952283406-b53173a8ab6d?w=400',
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
@@ -416,7 +553,7 @@ class HomeScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    publication['title'],
+                    publication.title,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -433,19 +570,20 @@ class HomeScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(publication['category']),
+                          color: const Color(
+                              0xFF8B4513), // Color genérico para todas las publicaciones
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(
-                          publication['category'],
-                          style: const TextStyle(
+                        child: const Text(
+                          'Publicación',
+                          style: TextStyle(
                             fontSize: 10,
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                      // Autor movido a la misma fila
+                      // Información del asesor
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
@@ -466,7 +604,7 @@ class HomeScreen extends StatelessWidget {
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
-                                publication['author'],
+                                'Asesor #${publication.advisorId}',
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: Colors.grey[600],
@@ -490,23 +628,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Tips':
-        return const Color(0xFF2196F3);
-      case 'Receta':
-        return const Color(0xFFFF9800);
-      case 'Salud':
-        return const Color(0xFF4CAF50);
-      case 'Nutrición':
-        return const Color(0xFF9C27B0);
-      default:
-        return const Color(0xFF8B4513);
-    }
-  }
-
-  void _showPublicationDetail(
-      BuildContext context, Map<String, dynamic> publication) {
+  void _showPublicationDetail(BuildContext context, Publication publication) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -551,7 +673,9 @@ class HomeScreen extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Image.network(
-                    publication['imageUrl'],
+                    publication.image.isNotEmpty
+                        ? publication.image
+                        : 'https://images.unsplash.com/photo-1589952283406-b53173a8ab6d?w=400',
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
@@ -585,7 +709,7 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            publication['title'],
+                            publication.title,
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -597,12 +721,12 @@ class HomeScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: _getCategoryColor(publication['category']),
+                            color: const Color(0xFF8B4513),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
-                            publication['category'],
-                            style: const TextStyle(
+                          child: const Text(
+                            'Publicación',
+                            style: TextStyle(
                               fontSize: 12,
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -616,7 +740,7 @@ class HomeScreen extends StatelessWidget {
 
                     // Descripción
                     Text(
-                      publication['description'],
+                      publication.description,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[700],
@@ -660,7 +784,7 @@ class HomeScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  publication['author'],
+                                  'Asesor #${publication.advisorId}',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -680,7 +804,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                _formatDate(publication['date']),
+                                _formatDate(publication.date.toIso8601String()),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],

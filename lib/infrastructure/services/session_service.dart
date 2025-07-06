@@ -12,11 +12,22 @@ class SessionService {
   }
 
   Future<void> setToken(String token) async {
+    print('DEBUG SessionService: Setting token, length: ${token.length}');
+    print('DEBUG SessionService: Token preview: ${token.substring(0, 20)}...');
     await _prefs?.setString('token', token);
+    print('DEBUG SessionService: Token saved');
   }
 
   String getToken() {
-    return _prefs?.getString('token') ?? '';
+    final token = _prefs?.getString('token') ?? '';
+    print('DEBUG SessionService: Getting token, length: ${token.length}');
+    if (token.isNotEmpty) {
+      print(
+          'DEBUG SessionService: Token preview: ${token.substring(0, 20)}...');
+    } else {
+      print('DEBUG SessionService: No token found');
+    }
+    return token;
   }
 
   Future<void> setUserId(int id) async {
