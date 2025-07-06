@@ -591,7 +591,8 @@ class _CuyFormScreenState extends State<CuyFormScreen> {
     return animal_svc.AnimalModel(
       id: cuy.id,
       name: cuy.nombre,
-      breed: animal_svc.Breed.fromString(cuy.color), // Convert color string to breed
+      breed: animal_svc.Breed.fromString(
+          cuy.color), // Convert color string to breed
       gender: cuy.sexo == 'macho', // true = macho, false = hembra
       birthdate: cuy.fechaNacimiento,
       weight: cuy.peso,
@@ -621,7 +622,8 @@ class _CuyFormScreenState extends State<CuyFormScreen> {
         sexo: _sexoSeleccionado,
         fechaNacimiento: _fechaNacimiento,
         peso: double.parse(_pesoController.text.trim()),
-        color: _breedSeleccionada.displayName, // Use breed display name as color
+        color:
+            _breedSeleccionada.displayName, // Use breed display name as color
         estado: _estadoSeleccionado,
         jaulaId: widget.jaulaId,
         fechaIngreso: _fechaIngreso,

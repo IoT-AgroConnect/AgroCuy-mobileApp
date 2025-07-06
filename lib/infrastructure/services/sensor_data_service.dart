@@ -15,12 +15,23 @@ class SensorDataService extends BaseService {
 
   String get sensorDataEndpoint => '$baseUrl/iot/sensor-data';
 
-  /// Get the authorization headers with token
-  Map<String, String> get _authHeaders {
+  /// Get the authorization headers with token (async)
+  Future<Map<String, String>> get _authHeaders async {
+    print('[SensorDataService] Getting auth headers...');
+
+    // Ensure session is initialized
+    await _sessionService.init();
+
     final token = _sessionService.getToken();
+    print(
+        '[SensorDataService] Token retrieved: ${token.isNotEmpty ? "Present (${token.length} chars)" : "Empty"}');
+
     if (token.isNotEmpty) {
-      return getHeaders(token);
+      final headers = getHeaders(token);
+      print('[SensorDataService] Auth headers: $headers');
+      return headers;
     } else {
+      print('[SensorDataService] No token available, using basic headers');
       return {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -31,29 +42,43 @@ class SensorDataService extends BaseService {
   /// Get all sensor data
   Future<List<SensorDataModel>> getAllSensorData() async {
     try {
+      print('[SensorDataService] Getting all sensor data...');
+      final headers = await _authHeaders;
+
       final response = await http.get(
         Uri.parse(sensorDataEndpoint),
-        headers: _authHeaders,
+        headers: headers,
       );
+
+      print(
+          '[SensorDataService] getAllSensorData response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
+        print(
+            '[SensorDataService] Retrieved ${jsonList.length} sensor data records');
         return jsonList.map((json) => SensorDataModel.fromJson(json)).toList();
       } else if (response.statusCode == 401) {
+        print('[SensorDataService] 401 error - token expired or invalid');
         throw Exception(
             '401: No autorizado. El token ha expirado o es inválido.');
       } else if (response.statusCode == 403) {
+        print('[SensorDataService] 403 error - access denied');
         throw Exception(
             '403: Acceso denegado. No tienes permisos para ver los datos de sensores.');
       } else if (response.statusCode == 404) {
+        print('[SensorDataService] 404 error - endpoint not found');
         throw Exception('404: Endpoint no encontrado.');
       } else if (response.statusCode == 500) {
+        print('[SensorDataService] 500 error - server error');
         throw Exception('500: Error interno del servidor.');
       } else {
+        print('[SensorDataService] Unexpected error: ${response.statusCode}');
         throw Exception(
             'Error ${response.statusCode}: ${response.reasonPhrase}');
       }
     } catch (e) {
+      print('[SensorDataService] Exception in getAllSensorData: $e');
       if (e.toString().contains('SocketException') ||
           e.toString().contains('Connection')) {
         throw Exception(
@@ -66,25 +91,39 @@ class SensorDataService extends BaseService {
   /// Get sensor data by ID
   Future<SensorDataModel?> getSensorDataById(int sensorDataId) async {
     try {
+      print('[SensorDataService] Getting sensor data by ID: $sensorDataId');
+      final headers = await _authHeaders;
+
       final response = await http.get(
         Uri.parse('$sensorDataEndpoint/$sensorDataId'),
-        headers: _authHeaders,
+        headers: headers,
       );
+
+      print(
+          '[SensorDataService] getSensorDataById response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
+        print(
+            '[SensorDataService] Retrieved sensor data for ID: $sensorDataId');
         return SensorDataModel.fromJson(json);
       } else if (response.statusCode == 404) {
+        print(
+            '[SensorDataService] Sensor data not found for ID: $sensorDataId');
         return null;
       } else if (response.statusCode == 401) {
+        print('[SensorDataService] 401 error - token expired or invalid');
         throw Exception(
             '401: No autorizado. El token ha expirado o es inválido.');
       } else if (response.statusCode == 403) {
+        print('[SensorDataService] 403 error - access denied');
         throw Exception('403: Acceso denegado.');
       } else {
+        print('[SensorDataService] Unexpected error: ${response.statusCode}');
         throw Exception('Failed to load sensor data: ${response.statusCode}');
       }
     } catch (e) {
+      print('[SensorDataService] Exception in getSensorDataById: $e');
       throw Exception('Error fetching sensor data: $e');
     }
   }
@@ -92,26 +131,39 @@ class SensorDataService extends BaseService {
   /// Get sensor data by cage ID
   Future<List<SensorDataModel>> getSensorDataByCageId(int cageId) async {
     try {
+      print('[SensorDataService] Getting sensor data for cage ID: $cageId');
+      final headers = await _authHeaders;
+
       final response = await http.get(
         Uri.parse('$sensorDataEndpoint/by-cage/$cageId'),
-        headers: _authHeaders,
+        headers: headers,
       );
+
+      print(
+          '[SensorDataService] getSensorDataByCageId response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
+        print(
+            '[SensorDataService] Retrieved ${jsonList.length} sensor data records for cage $cageId');
         return jsonList.map((json) => SensorDataModel.fromJson(json)).toList();
       } else if (response.statusCode == 404) {
+        print('[SensorDataService] No sensor data found for cage: $cageId');
         return []; // Return empty list if no sensor data found for cage
       } else if (response.statusCode == 401) {
+        print('[SensorDataService] 401 error - token expired or invalid');
         throw Exception(
             '401: No autorizado. El token ha expirado o es inválido.');
       } else if (response.statusCode == 403) {
+        print('[SensorDataService] 403 error - access denied');
         throw Exception('403: Acceso denegado.');
       } else {
+        print('[SensorDataService] Unexpected error: ${response.statusCode}');
         throw Exception(
             'Failed to load sensor data for cage: ${response.statusCode}');
       }
     } catch (e) {
+      print('[SensorDataService] Exception in getSensorDataByCageId: $e');
       throw Exception('Error fetching sensor data by cage: $e');
     }
   }
@@ -120,26 +172,39 @@ class SensorDataService extends BaseService {
   Future<SensorDataModel?> createSensorData(
       CreateSensorDataRequest request) async {
     try {
+      print(
+          '[SensorDataService] Creating new sensor data for cage: ${request.cageId}');
+      final headers = await _authHeaders;
+
       final response = await http.post(
         Uri.parse(sensorDataEndpoint),
-        headers: _authHeaders,
+        headers: headers,
         body: json.encode(request.toJson()),
       );
 
+      print(
+          '[SensorDataService] createSensorData response: ${response.statusCode}');
+
       if (response.statusCode == 201) {
         final Map<String, dynamic> json = jsonDecode(response.body);
+        print('[SensorDataService] Successfully created sensor data');
         return SensorDataModel.fromJson(json);
       } else if (response.statusCode == 400) {
+        print('[SensorDataService] 400 error - invalid data');
         throw Exception('400: Datos inválidos para crear el dato de sensor.');
       } else if (response.statusCode == 401) {
+        print('[SensorDataService] 401 error - token expired or invalid');
         throw Exception(
             '401: No autorizado. El token ha expirado o es inválido.');
       } else if (response.statusCode == 403) {
+        print('[SensorDataService] 403 error - access denied');
         throw Exception('403: Acceso denegado.');
       } else {
+        print('[SensorDataService] Unexpected error: ${response.statusCode}');
         throw Exception('Failed to create sensor data: ${response.statusCode}');
       }
     } catch (e) {
+      print('[SensorDataService] Exception in createSensorData: $e');
       throw Exception('Error creating sensor data: $e');
     }
   }
@@ -148,29 +213,43 @@ class SensorDataService extends BaseService {
   Future<SensorDataModel?> updateSensorData(
       int sensorDataId, UpdateSensorDataRequest request) async {
     try {
+      print('[SensorDataService] Updating sensor data ID: $sensorDataId');
+      final headers = await _authHeaders;
+
       final response = await http.put(
         Uri.parse('$sensorDataEndpoint/$sensorDataId'),
-        headers: _authHeaders,
+        headers: headers,
         body: json.encode(request.toJson()),
       );
 
+      print(
+          '[SensorDataService] updateSensorData response: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
+        print(
+            '[SensorDataService] Successfully updated sensor data ID: $sensorDataId');
         return SensorDataModel.fromJson(json);
       } else if (response.statusCode == 400) {
+        print('[SensorDataService] 400 error - invalid data');
         throw Exception(
             '400: Datos inválidos para actualizar el dato de sensor.');
       } else if (response.statusCode == 404) {
+        print('[SensorDataService] 404 error - sensor data not found');
         throw Exception('404: Dato de sensor no encontrado.');
       } else if (response.statusCode == 401) {
+        print('[SensorDataService] 401 error - token expired or invalid');
         throw Exception(
             '401: No autorizado. El token ha expirado o es inválido.');
       } else if (response.statusCode == 403) {
+        print('[SensorDataService] 403 error - access denied');
         throw Exception('403: Acceso denegado.');
       } else {
+        print('[SensorDataService] Unexpected error: ${response.statusCode}');
         throw Exception('Failed to update sensor data: ${response.statusCode}');
       }
     } catch (e) {
+      print('[SensorDataService] Exception in updateSensorData: $e');
       throw Exception('Error updating sensor data: $e');
     }
   }
@@ -178,24 +257,37 @@ class SensorDataService extends BaseService {
   /// Delete sensor data
   Future<bool> deleteSensorData(int sensorDataId) async {
     try {
+      print('[SensorDataService] Deleting sensor data ID: $sensorDataId');
+      final headers = await _authHeaders;
+
       final response = await http.delete(
         Uri.parse('$sensorDataEndpoint/$sensorDataId'),
-        headers: _authHeaders,
+        headers: headers,
       );
 
+      print(
+          '[SensorDataService] deleteSensorData response: ${response.statusCode}');
+
       if (response.statusCode == 200) {
+        print(
+            '[SensorDataService] Successfully deleted sensor data ID: $sensorDataId');
         return true;
       } else if (response.statusCode == 404) {
+        print('[SensorDataService] 404 error - sensor data not found');
         throw Exception('404: Dato de sensor no encontrado.');
       } else if (response.statusCode == 401) {
+        print('[SensorDataService] 401 error - token expired or invalid');
         throw Exception(
             '401: No autorizado. El token ha expirado o es inválido.');
       } else if (response.statusCode == 403) {
+        print('[SensorDataService] 403 error - access denied');
         throw Exception('403: Acceso denegado.');
       } else {
+        print('[SensorDataService] Unexpected error: ${response.statusCode}');
         throw Exception('Failed to delete sensor data: ${response.statusCode}');
       }
     } catch (e) {
+      print('[SensorDataService] Exception in deleteSensorData: $e');
       throw Exception('Error deleting sensor data: $e');
     }
   }

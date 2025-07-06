@@ -127,7 +127,8 @@ class AnimalModel {
   // Utility getters for UI
   String get sexo => gender ? 'macho' : 'hembra';
   String get estado => isSick ? 'enfermo' : 'sano';
-  String get color => breed.displayName; // Using breed display name as color for now
+  String get color =>
+      breed.displayName; // Using breed display name as color for now
   DateTime get fechaNacimiento => birthdate;
   DateTime get fechaIngreso => birthdate; // Assuming same as birthdate for now
   double get peso => weight;
@@ -154,7 +155,11 @@ class AnimalModel {
 class AnimalService extends BaseService {
   static final AnimalService _instance = AnimalService._internal();
   factory AnimalService() => _instance;
-  AnimalService._internal();
+  AnimalService._internal() {
+    print('🐹 DEBUG ANIMAL: AnimalService initialized');
+    print('🌐 DEBUG ANIMAL: Base URL configured: $baseUrl');
+    print('🔧 DEBUG ANIMAL: Service ready for animal requests');
+  }
 
   final SessionService _sessionService = SessionService();
 
@@ -166,16 +171,16 @@ class AnimalService extends BaseService {
     await _sessionService.init();
 
     final token = _sessionService.getToken();
-    print('DEBUG AnimalService: Token length: ${token.length}');
+    print('🔑 DEBUG ANIMAL: Token length: ${token.length}');
     print(
-        'DEBUG AnimalService: Token (first 50 chars): ${token.length > 50 ? token.substring(0, 50) : token}');
+        '🔑 DEBUG ANIMAL: Token (first 50 chars): ${token.length > 50 ? token.substring(0, 50) : token}...');
 
     if (token.isNotEmpty) {
       final headers = getHeaders(token);
-      print('DEBUG AnimalService: Headers with token: $headers');
+      print('📋 DEBUG ANIMAL: Headers with token: $headers');
       return headers;
     } else {
-      print('DEBUG AnimalService: No token found, using basic headers');
+      print('⚠️ DEBUG ANIMAL: No token found, using basic headers');
       return {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -187,142 +192,197 @@ class AnimalService extends BaseService {
   bool isAuthenticated() {
     final token = _sessionService.getToken();
     print(
-        'DEBUG AnimalService: isAuthenticated check - token length: ${token.length}');
+        '🔐 DEBUG ANIMAL: isAuthenticated check - token length: ${token.length}');
     return token.isNotEmpty;
   }
 
   /// Obtiene todos los animales
   Future<List<AnimalModel>> getAllAnimals() async {
+    print('🐹 DEBUG ANIMAL: Starting getAllAnimals request...');
+
     if (!isAuthenticated()) {
+      print('❌ DEBUG ANIMAL: User not authenticated');
       throw Exception(
           'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
     }
 
     try {
-      print('DEBUG AnimalService: Making request to $animalsEndpoint');
+      print('🌐 DEBUG ANIMAL: Making request to $animalsEndpoint');
       final headers = await _authHeaders;
+
       final response = await http.get(
         Uri.parse(animalsEndpoint),
         headers: headers,
       );
 
-      print('DEBUG AnimalService: Response status: ${response.statusCode}');
-      print('DEBUG AnimalService: Response body: ${response.body}');
+      print('📡 DEBUG ANIMAL: Response received');
+      print('🔢 DEBUG ANIMAL: Response status: ${response.statusCode}');
+      print('📄 DEBUG ANIMAL: Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         print(
-            'DEBUG AnimalService: Parsed ${data.length} animals from response');
+            '✅ DEBUG ANIMAL: Successfully parsed ${data.length} animals from response');
         return data.map((item) => AnimalModel.fromJson(item)).toList();
       } else if (response.statusCode == 401) {
+        print('🔒 DEBUG ANIMAL: Unauthorized - session expired');
         throw Exception(
             'Sesión expirada. Por favor, inicia sesión nuevamente.');
       } else {
+        print(
+            '❌ DEBUG ANIMAL: Request failed with status: ${response.statusCode}');
+        print('💬 DEBUG ANIMAL: Error response: ${response.body}');
         throw Exception('Error al obtener animales: ${response.statusCode}');
       }
     } catch (e) {
+      print('🚨 DEBUG ANIMAL: Exception in getAllAnimals: $e');
+      print('🔍 DEBUG ANIMAL: Exception type: ${e.runtimeType}');
       throw Exception('Error de conexión: ${e.toString()}');
     }
   }
 
   /// Obtiene un animal por ID
   Future<AnimalModel?> getAnimalById(int animalId) async {
+    print('🐹 DEBUG ANIMAL: Starting getAnimalById request for ID: $animalId');
+
     if (!isAuthenticated()) {
+      print('❌ DEBUG ANIMAL: User not authenticated');
       throw Exception(
           'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
     }
 
     try {
+      final url = '$animalsEndpoint/$animalId';
+      print('🌐 DEBUG ANIMAL: Making request to $url');
+
       final headers = await _authHeaders;
       final response = await http.get(
-        Uri.parse('$animalsEndpoint/$animalId'),
+        Uri.parse(url),
         headers: headers,
       );
 
+      print('📡 DEBUG ANIMAL: getAnimalById response received');
+      print('🔢 DEBUG ANIMAL: Response status: ${response.statusCode}');
+      print('📄 DEBUG ANIMAL: Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
+        print('✅ DEBUG ANIMAL: Successfully retrieved animal data');
         return AnimalModel.fromJson(data);
       } else if (response.statusCode == 404) {
+        print('🔍 DEBUG ANIMAL: Animal not found with ID: $animalId');
         return null; // Animal no encontrado
       } else if (response.statusCode == 401) {
+        print('🔒 DEBUG ANIMAL: Unauthorized - session expired');
         throw Exception(
             'Sesión expirada. Por favor, inicia sesión nuevamente.');
       } else {
+        print(
+            '❌ DEBUG ANIMAL: Request failed with status: ${response.statusCode}');
+        print('💬 DEBUG ANIMAL: Error response: ${response.body}');
         throw Exception('Error al obtener animal: ${response.statusCode}');
       }
     } catch (e) {
+      print('🚨 DEBUG ANIMAL: Exception in getAnimalById: $e');
+      print('🔍 DEBUG ANIMAL: Exception type: ${e.runtimeType}');
       throw Exception('Error de conexión: ${e.toString()}');
     }
   }
 
   /// Obtiene animales por ID de jaula (filtrado desde getAllAnimals)
   Future<List<AnimalModel>> getAnimalsByCageId(int cageId) async {
-    try {
-      print(
-          'DEBUG AnimalService: Getting all animals for filtering by cage $cageId');
+    print('🏠 DEBUG ANIMAL: Starting getAnimalsByCageId for cage: $cageId');
 
+    try {
       // First try the endpoint /cages/{cageId}/animals
       try {
-        print('DEBUG AnimalService: Trying direct endpoint for cage animals');
+        print('🔄 DEBUG ANIMAL: Trying direct endpoint for cage animals');
+        final url = '$baseUrl/cages/$cageId/animals';
+        print('🌐 DEBUG ANIMAL: Direct endpoint URL: $url');
+
         final headers = await _authHeaders;
         final response = await http.get(
-          Uri.parse('$baseUrl/cages/$cageId/animals'),
+          Uri.parse(url),
           headers: headers,
         );
 
-        print(
-            'DEBUG AnimalService: Direct endpoint response status: ${response.statusCode}');
+        print('📡 DEBUG ANIMAL: Direct endpoint response received');
+        print('🔢 DEBUG ANIMAL: Response status: ${response.statusCode}');
+        print('📄 DEBUG ANIMAL: Response body: ${response.body}');
 
         if (response.statusCode == 200) {
           final List<dynamic> data = json.decode(response.body);
           print(
-              'DEBUG AnimalService: Direct endpoint returned ${data.length} animals for cage $cageId');
+              '✅ DEBUG ANIMAL: Direct endpoint returned ${data.length} animals for cage $cageId');
           return data.map((item) => AnimalModel.fromJson(item)).toList();
         }
       } catch (e) {
-        print('DEBUG AnimalService: Direct endpoint failed: $e');
+        print('⚠️ DEBUG ANIMAL: Direct endpoint failed: $e');
       }
 
       // Fallback: get all animals and filter
-      print('DEBUG AnimalService: Falling back to getAllAnimals and filtering');
+      print('🔄 DEBUG ANIMAL: Falling back to getAllAnimals and filtering');
       final allAnimals = await getAllAnimals();
-      print('DEBUG AnimalService: Total animals fetched: ${allAnimals.length}');
+      print('📊 DEBUG ANIMAL: Total animals fetched: ${allAnimals.length}');
       final filteredAnimals =
           allAnimals.where((animal) => animal.cageId == cageId).toList();
       print(
-          'DEBUG AnimalService: Animals for cage $cageId: ${filteredAnimals.length}');
+          '✅ DEBUG ANIMAL: Animals for cage $cageId: ${filteredAnimals.length}');
       return filteredAnimals;
     } catch (e) {
-      print('DEBUG AnimalService: Error in getAnimalsByCageId: $e');
+      print('🚨 DEBUG ANIMAL: Exception in getAnimalsByCageId: $e');
+      print('🔍 DEBUG ANIMAL: Exception type: ${e.runtimeType}');
       throw Exception('Error al obtener animales de la jaula: ${e.toString()}');
     }
   }
 
   /// Crea un nuevo animal
   Future<AnimalModel> createAnimal(AnimalModel animal) async {
+    print('➕ DEBUG ANIMAL: Starting createAnimal...');
+    print('🐹 DEBUG ANIMAL: Animal name: ${animal.name}');
+    print('🏠 DEBUG ANIMAL: Cage ID: ${animal.cageId}');
+
     if (!isAuthenticated()) {
+      print('❌ DEBUG ANIMAL: User not authenticated');
       throw Exception(
           'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
     }
 
     try {
+      final url = animalsEndpoint;
+      print('🌐 DEBUG ANIMAL: Making POST request to $url');
+
+      final createData = animal.toCreateJson();
+      print('📦 DEBUG ANIMAL: Request body: ${json.encode(createData)}');
+
       final headers = await _authHeaders;
       final response = await http.post(
-        Uri.parse(animalsEndpoint),
+        Uri.parse(url),
         headers: headers,
-        body: json.encode(animal.toCreateJson()),
+        body: json.encode(createData),
       );
+
+      print('📡 DEBUG ANIMAL: createAnimal response received');
+      print('🔢 DEBUG ANIMAL: Response status: ${response.statusCode}');
+      print('📄 DEBUG ANIMAL: Response body: ${response.body}');
 
       if (response.statusCode == 201) {
         final Map<String, dynamic> data = json.decode(response.body);
+        print('✅ DEBUG ANIMAL: Animal created successfully');
         return AnimalModel.fromJson(data);
       } else if (response.statusCode == 401) {
+        print('🔒 DEBUG ANIMAL: Unauthorized - session expired');
         throw Exception(
             'Sesión expirada. Por favor, inicia sesión nuevamente.');
       } else {
+        print(
+            '❌ DEBUG ANIMAL: Create failed with status: ${response.statusCode}');
+        print('💬 DEBUG ANIMAL: Error response: ${response.body}');
         throw Exception('Error al crear animal: ${response.statusCode}');
       }
     } catch (e) {
+      print('🚨 DEBUG ANIMAL: Exception in createAnimal: $e');
+      print('🔍 DEBUG ANIMAL: Exception type: ${e.runtimeType}');
       throw Exception('Error de conexión: ${e.toString()}');
     }
   }

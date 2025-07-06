@@ -51,15 +51,16 @@ class CageService extends BaseService {
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
         print('DEBUG CageService: Raw backend response: $jsonList');
-        
+
         final mappedCages = jsonList.map((json) {
           print('DEBUG CageService: Original cage JSON: $json');
           final mapped = _mapCageToJaula(json);
           print('DEBUG CageService: Mapped cage JSON: $mapped');
           return JaulaModel.fromJson(mapped);
         }).toList();
-        
-        print('DEBUG CageService: Successfully mapped ${mappedCages.length} cages');
+
+        print(
+            'DEBUG CageService: Successfully mapped ${mappedCages.length} cages');
         return mappedCages;
       } else if (response.statusCode == 401) {
         throw Exception(
@@ -254,9 +255,14 @@ class CageService extends BaseService {
     return {
       'id': cageJson['id'] ?? 0,
       'nombre': cageJson['name'] ?? cageJson['nombre'] ?? '',
-      'descripcion': cageJson['observations'] ?? cageJson['description'] ?? cageJson['descripcion'] ?? '',
-      'capacidadMaxima':
-          cageJson['size'] ?? cageJson['maxCapacity'] ?? cageJson['capacidadMaxima'] ?? 0,
+      'descripcion': cageJson['observations'] ??
+          cageJson['description'] ??
+          cageJson['descripcion'] ??
+          '',
+      'capacidadMaxima': cageJson['size'] ??
+          cageJson['maxCapacity'] ??
+          cageJson['capacidadMaxima'] ??
+          0,
       'fechaCreacion': cageJson['createdDate'] ??
           cageJson['fechaCreacion'] ??
           DateTime.now().toIso8601String(),
