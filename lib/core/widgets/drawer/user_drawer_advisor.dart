@@ -44,7 +44,7 @@ class UserDrawerAdvisor extends StatelessWidget {
           Text('@${username.split('@').first}',
               style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 30),
-          //solo estoy agregando esto para redirigir a la pantalla de mi granja
+          //solo estoy agregando esto para redirigir a la pantalla de mi granjae
           //_buildItem("Mi granja", () {
           //  Navigator.pop(context); //  CIERRA el Drawer
           //  Navigator.push(
