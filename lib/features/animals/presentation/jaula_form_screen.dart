@@ -347,11 +347,19 @@ class _JaulaFormScreenState extends State<JaulaFormScreen> {
       } else {
         print('DEBUG: Creating new cage...');
         // Create new cage
+        final breederId = _sessionService.getBreederId();
+        print('DEBUG: Using breederId from session: $breederId');
+
+        if (breederId == 0) {
+          throw Exception(
+              'Error: No se encontró el ID del criador en la sesión. Por favor, inicia sesión nuevamente.');
+        }
+
         final createRequest = CreateCageRequest(
           name: _nombreController.text.trim(),
           observations: _descripcionController.text.trim(),
           size: int.parse(_capacidadController.text.trim()),
-          breederId: widget.userId, // Use current user as breeder
+          breederId: breederId, // Use breederID from session
         );
         print('DEBUG: CreateRequest: ${createRequest.toJson()}');
         await _cageService.createCage(createRequest);

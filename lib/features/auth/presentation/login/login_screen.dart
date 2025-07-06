@@ -99,6 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       } else if (role == 'ROLE_BREEDER') {
+        // Save the breederId for future use
+        await SessionService().setBreederId(profile['id']);
+        print('DEBUG LOGIN: Breeder ID saved: ${profile['id']}');
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

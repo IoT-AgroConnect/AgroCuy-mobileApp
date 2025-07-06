@@ -46,6 +46,17 @@ class SessionService {
     return _prefs?.getString('role') ?? '';
   }
 
+  Future<void> setBreederId(int breederId) async {
+    print('DEBUG SessionService: Setting breederId: $breederId');
+    await _prefs?.setInt('breederId', breederId);
+  }
+
+  int getBreederId() {
+    final breederId = _prefs?.getInt('breederId') ?? 0;
+    print('DEBUG SessionService: Getting breederId: $breederId');
+    return breederId;
+  }
+
   Future<void> clear() async {
     await _prefs?.clear();
   }
