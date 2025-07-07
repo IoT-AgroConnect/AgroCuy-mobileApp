@@ -442,6 +442,27 @@ class SensorDataService extends BaseService {
   String getCurrentToken() {
     return _sessionService.getToken();
   }
+
+  /// Manually refresh sensor data for a specific cage
+  Future<void> refreshSensorDataByCageId(int cageId) async {
+    print('[SensorDataService] Manual refresh requested for cage ID: $cageId');
+
+    // Get the stream controller for this cage
+    final controller = _cageDataStreams[cageId];
+    if (controller != null && !controller.isClosed) {
+      try {
+        final data = await getSensorDataByCageId(cageId);
+        controller.add(data);
+        print('[SensorDataService] Manual refresh completed for cage $cageId');
+      } catch (e) {
+        print(
+            '[SensorDataService] Error in manual refresh for cage $cageId: $e');
+        controller.addError(e);
+      }
+    } else {
+      print('[SensorDataService] No active stream found for cage $cageId');
+    }
+  }
 }
 
 /// Sensor data model based on your backend response

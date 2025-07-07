@@ -49,6 +49,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
   StreamSubscription<SensorDataModel?>? _sensorDataSubscription;
   SensorDataModel? _latestSensorData;
   DateTime? _lastSensorUpdateTime;
+  bool _isRefreshingSensorData = false;
 
   AcceptableRangeModel? _currentRanges;
   List<FeedingScheduleModel> _feedingSchedules = [];
@@ -143,6 +144,65 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
       _animalsFuture =
           _animalService.getAnimalsByCageIdWithRetry(widget.jaula.id);
     });
+  }
+
+  /// Manual refresh of sensor data
+  Future<void> _refreshSensorData() async {
+    print(
+        '[JaulaDetailScreen] Manual sensor data refresh requested for cage ${widget.jaula.id}');
+
+    setState(() {
+      _isRefreshingSensorData = true;
+    });
+
+    try {
+      await _sensorDataService.refreshSensorDataByCageId(widget.jaula.id);
+
+      // Show feedback to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.refresh, color: Colors.white, size: 16),
+                SizedBox(width: 8),
+                Text('Datos actualizados'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('[JaulaDetailScreen] Error refreshing sensor data: $e');
+
+      // Show error feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                      'Error al actualizar: ${e.toString().replaceFirst('Exception: ', '')}'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshingSensorData = false;
+        });
+      }
+    }
   }
 
   @override
@@ -384,18 +444,57 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-                                    const Text(
-                                      'Monitoreo IoT',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF8B4513),
+                                    const Expanded(
+                                      child: Text(
+                                        'Monitoreo IoT',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF8B4513),
+                                        ),
                                       ),
                                     ),
-                                    const Spacer(),
+                                    // Manual refresh button
+                                    IconButton(
+                                      onPressed: _isRefreshingSensorData
+                                          ? null
+                                          : _refreshSensorData,
+                                      icon: _isRefreshingSensorData
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                            Color>(
+                                                        Color(0xFF2196F3)),
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.refresh,
+                                              size: 18,
+                                              color: Color(0xFF2196F3),
+                                            ),
+                                      tooltip: _isRefreshingSensorData
+                                          ? 'Actualizando...'
+                                          : 'Actualizar datos',
+                                      padding: const EdgeInsets.all(2),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 28,
+                                        minHeight: 28,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
                                     // Real-time connection status
                                     _buildConnectionStatus(),
-                                    const SizedBox(width: 8),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                // Status indicator row
+                                Row(
+                                  children: [
+                                    const Spacer(),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 4),
@@ -425,7 +524,7 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 4),
                                 // Show last update indicator
                                 _buildUpdateIndicator(),
 
@@ -942,29 +1041,29 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
     final isConnected = _latestSensorData != null;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: isConnected ? Colors.green : Colors.red,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 6,
-            height: 6,
+            width: 4,
+            height: 4,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 3),
           Text(
-            isConnected ? 'En vivo' : 'Sin datos',
+            isConnected ? 'Live' : 'Off',
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
-              fontSize: 10,
+              fontSize: 9,
             ),
           ),
         ],
