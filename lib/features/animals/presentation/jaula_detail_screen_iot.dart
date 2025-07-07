@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:agrocuy/core/widgets/app_bar_menu.dart';
 import 'package:agrocuy/core/widgets/drawer/user_drawer_breeder.dart';
@@ -41,11 +42,14 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
   late final SessionService _sessionService;
 
   late Future<List<animal_svc.AnimalModel>> _animalsFuture;
-  late Future<List<SensorDataModel>> _sensorDataFuture;
   late Future<List<FeedingScheduleModel>> _feedingSchedulesFuture;
   late Future<AcceptableRangeModel?> _acceptableRangesFuture;
 
+  // Real-time sensor data stream
+  StreamSubscription<SensorDataModel?>? _sensorDataSubscription;
   SensorDataModel? _latestSensorData;
+  DateTime? _lastSensorUpdateTime;
+
   AcceptableRangeModel? _currentRanges;
   List<FeedingScheduleModel> _feedingSchedules = [];
   bool _isLoading = false;
@@ -60,6 +64,37 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
     _acceptableRangeService = AcceptableRangeService();
     _sessionService = SessionService();
     _loadData();
+    _setupSensorDataStream();
+  }
+
+  @override
+  void dispose() {
+    _sensorDataSubscription?.cancel();
+    _sensorDataService.closeAllStreams();
+    super.dispose();
+  }
+
+  /// Setup real-time sensor data stream
+  void _setupSensorDataStream() {
+    print(
+        '[JaulaDetailScreen] Setting up sensor data stream for cage ${widget.jaula.id}');
+
+    _sensorDataSubscription = _sensorDataService
+        .getLatestSensorDataStreamByCageId(widget.jaula.id)
+        .listen(
+      (sensorData) {
+        print(
+            '[JaulaDetailScreen] Received sensor data update: ${sensorData?.id}');
+        setState(() {
+          _latestSensorData = sensorData;
+          _lastSensorUpdateTime = DateTime.now();
+        });
+      },
+      onError: (error) {
+        print('[JaulaDetailScreen] Sensor data stream error: $error');
+        // Optionally show error, but don't override main error message
+      },
+    );
   }
 
   Future<void> _loadData() async {
@@ -77,21 +112,13 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
             'Usuario no autenticado. Por favor, inicia sesión nuevamente.');
       }
 
-      // Load all data in parallel
+      // Load all data in parallel (excluding sensor data since it's now streamed)
       _animalsFuture =
           _animalService.getAnimalsByCageIdWithRetry(widget.jaula.id);
-      _sensorDataFuture =
-          _sensorDataService.getSensorDataByCageWithRetry(widget.jaula.id);
       _feedingSchedulesFuture = _feedingScheduleService
           .getFeedingSchedulesByCageWithRetry(widget.jaula.id);
       _acceptableRangesFuture = _acceptableRangeService
           .getAcceptableRangesByCageWithRetry(widget.jaula.id);
-
-      // Get latest sensor data for real-time display
-      final sensorDataList = await _sensorDataFuture;
-      if (sensorDataList.isNotEmpty) {
-        _latestSensorData = sensorDataList.last; // Get most recent data
-      }
 
       // Get current acceptable ranges
       _currentRanges = await _acceptableRangesFuture;
@@ -366,6 +393,9 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                                       ),
                                     ),
                                     const Spacer(),
+                                    // Real-time connection status
+                                    _buildConnectionStatus(),
+                                    const SizedBox(width: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 4),
@@ -395,7 +425,9 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
+                                // Show last update indicator
+                                _buildUpdateIndicator(),
 
                                 // Sensores principales con datos reales
                                 Row(
@@ -901,6 +933,91 @@ class _JaulaDetailScreenState extends State<JaulaDetailScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Build real-time connection status indicator
+  Widget _buildConnectionStatus() {
+    final isConnected = _latestSensorData != null;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isConnected ? Colors.green : Colors.red,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isConnected ? 'En vivo' : 'Sin datos',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Get formatted last update time
+  String _getLastUpdateTime() {
+    if (_lastSensorUpdateTime == null) {
+      return 'Sin datos';
+    }
+
+    final now = DateTime.now();
+    final difference = now.difference(_lastSensorUpdateTime!);
+
+    if (difference.inSeconds < 60) {
+      return 'Hace ${difference.inSeconds}s';
+    } else if (difference.inMinutes < 60) {
+      return 'Hace ${difference.inMinutes}m';
+    } else {
+      return 'Hace ${difference.inHours}h';
+    }
+  }
+
+  /// Show real-time update indicator
+  Widget _buildUpdateIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.update,
+            size: 16,
+            color: Colors.blue,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Última actualización: ${_getLastUpdateTime()}',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.blue[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
